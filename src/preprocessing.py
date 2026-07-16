@@ -5,6 +5,7 @@ redimensionamento (scaling) de dados usando o padrão de projeto Strategy.
 """
 
 from abc import ABC, abstractmethod
+from typing import cast
 
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -70,7 +71,7 @@ class StandardScalerStrategy(PreprocessorStrategy):
         Returns:
             Array numpy escalonado.
         """
-        return self.scaler.transform(data)
+        return cast(np.ndarray, self.scaler.transform(data))
 
 
 class MinMaxScalerStrategy(PreprocessorStrategy):
@@ -105,7 +106,7 @@ class MinMaxScalerStrategy(PreprocessorStrategy):
         Returns:
             Array numpy escalonado.
         """
-        return self.scaler.transform(data)
+        return cast(np.ndarray, self.scaler.transform(data))
 
 
 class DataPreprocessor:

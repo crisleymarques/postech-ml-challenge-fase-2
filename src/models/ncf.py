@@ -64,7 +64,9 @@ class NCF(nn.Module):
         # mas aqui retornamos os logits e aplicamos BCEWithLogitsLoss no treino.
         self.output_layer = nn.Linear(in_dim, 1)
 
-    def forward(self, user_indices: torch.Tensor, item_indices: torch.Tensor) -> torch.Tensor:  # noqa: E501
+    def forward(
+        self, user_indices: torch.Tensor, item_indices: torch.Tensor
+    ) -> torch.Tensor:  # noqa: E501
         """Executa a passagem para frente (forward pass) do modelo.
 
         Args:

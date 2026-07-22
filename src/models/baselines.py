@@ -27,7 +27,7 @@ class BaseRecommender(ABC):
         interactions: pd.DataFrame,
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
-    ) -> "BaseRecommender":
+    ) -> BaseRecommender:
         raise NotImplementedError
 
     @abstractmethod
@@ -52,7 +52,7 @@ class PopularityRecommender(BaseRecommender):
         interactions: pd.DataFrame,
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
-    ) -> "PopularityRecommender":
+    ) -> PopularityRecommender:
         del user_features
 
         popularity = (
@@ -68,11 +68,15 @@ class PopularityRecommender(BaseRecommender):
         )
 
         seen_items = set(popularity["movie_id"].tolist())
-        cold_items = item_features.loc[~item_features["movie_id"].isin(seen_items), ["movie_id"]].copy()
+        cold_items = item_features.loc[
+            ~item_features["movie_id"].isin(seen_items), ["movie_id"]
+        ].copy()
         cold_items["interaction_count"] = 0
         cold_items["mean_rating"] = 0.0
 
-        full_ranking = pd.concat([popularity, cold_items], ignore_index=True).sort_values(
+        full_ranking = pd.concat(
+            [popularity, cold_items], ignore_index=True
+        ).sort_values(
             by=["interaction_count", "mean_rating", "movie_id"],
             ascending=[False, False, True],
         )
@@ -120,22 +124,30 @@ class ItemKNNRecommender(BaseRecommender):
         interactions: pd.DataFrame,
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
-    ) -> "ItemKNNRecommender":
+    ) -> ItemKNNRecommender:
         self.user_id_to_idx = {
-            int(row.user_id): int(row.user_idx) for row in user_features[["user_id", "user_idx"]].itertuples(index=False)
+            int(row.user_id): int(row.user_idx)
+            for row in user_features[["user_id", "user_idx"]].itertuples(index=False)
         }
         self.movie_id_to_idx = {
-            int(row.movie_id): int(row.item_idx) for row in item_features[["movie_id", "item_idx"]].itertuples(index=False)
+            int(row.movie_id): int(row.item_idx)
+            for row in item_features[["movie_id", "item_idx"]].itertuples(index=False)
         }
-        self.idx_to_movie_id = {item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()}
+        self.idx_to_movie_id = {
+            item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()
+        }
 
         n_users = len(self.user_id_to_idx)
         n_items = len(self.movie_id_to_idx)
         rows = interactions["user_idx"].to_numpy(dtype=np.int32)
         cols = interactions["item_idx"].to_numpy(dtype=np.int32)
-        values = (interactions["rating"].to_numpy(dtype=np.float32) / 5.0).astype(np.float32)
+        values = (interactions["rating"].to_numpy(dtype=np.float32) / 5.0).astype(
+            np.float32
+        )
 
-        self.user_item_matrix = coo_matrix((values, (rows, cols)), shape=(n_users, n_items)).tocsr()
+        self.user_item_matrix = coo_matrix(
+            (values, (rows, cols)), shape=(n_users, n_items)
+        ).tocsr()
 
         knn = NearestNeighbors(
             metric="cosine",
@@ -161,12 +173,18 @@ class ItemKNNRecommender(BaseRecommender):
                     similarity_data.append(similarity)
 
         self.item_similarity_matrix = coo_matrix(
-            (np.asarray(similarity_data, dtype=np.float32), (similarity_rows, similarity_cols)),
+            (
+                np.asarray(similarity_data, dtype=np.float32),
+                (similarity_rows, similarity_cols),
+            ),
             shape=(n_items, n_items),
         ).tocsr()
 
         popularity_counts = (
-            interactions.groupby("item_idx")["user_id"].size().reindex(range(n_items), fill_value=0).to_numpy(dtype=np.float32)
+            interactions.groupby("item_idx")["user_id"]
+            .size()
+            .reindex(range(n_items), fill_value=0)
+            .to_numpy(dtype=np.float32)
         )
         max_count = popularity_counts.max() if len(popularity_counts) else 1.0
         if max_count == 0:
@@ -180,14 +198,24 @@ class ItemKNNRecommender(BaseRecommender):
         candidate_item_ids: list[int],
         k: int,
     ) -> list[int]:
-        if self.user_item_matrix is None or self.item_similarity_matrix is None or self.popularity_scores is None:
-            raise RuntimeError("O modelo precisa ser treinado antes de gerar recomendações.")
+        if (
+            self.user_item_matrix is None
+            or self.item_similarity_matrix is None
+            or self.popularity_scores is None
+        ):
+            raise RuntimeError(
+                "O modelo precisa ser treinado antes de gerar recomendações."
+            )
 
         user_idx = self.user_id_to_idx.get(int(user_id))
         if user_idx is None:
             return candidate_item_ids[:k]
 
-        candidate_indices = [self.movie_id_to_idx[item_id] for item_id in candidate_item_ids if item_id in self.movie_id_to_idx]
+        candidate_indices = [
+            self.movie_id_to_idx[item_id]
+            for item_id in candidate_item_ids
+            if item_id in self.movie_id_to_idx
+        ]
         if not candidate_indices:
             return []
 

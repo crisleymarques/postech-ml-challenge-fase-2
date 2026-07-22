@@ -31,9 +31,7 @@ def test_early_stopping(mock_log, model, dummy_data, tmp_path):
     checkpoint = tmp_path / "model.pth"
 
     strategy = NCFTrainingStrategy(
-        epochs=10,
-        early_stopping_patience=2,
-        checkpoint_path=str(checkpoint)
+        epochs=10, early_stopping_patience=2, checkpoint_path=str(checkpoint)
     )
 
     # Força a validação a piorar progressivamente
@@ -61,4 +59,6 @@ def test_checkpoint_save_load(model, tmp_path):
 
     # Carrega e verifica se restaurou
     strategy.load_checkpoint(model)
-    assert not torch.allclose(model.user_embedding.weight, torch.zeros_like(model.user_embedding.weight))  # noqa: E501
+    assert not torch.allclose(
+        model.user_embedding.weight, torch.zeros_like(model.user_embedding.weight)
+    )  # noqa: E501

@@ -35,15 +35,21 @@ class NCFWrapper(BaseRecommender):
         item_features: pd.DataFrame,
     ) -> "NCFWrapper":
         """Prepara os mapeamentos de IDs."""
-        self.user_id_to_idx = dict(zip(
-            user_features["user_id"].astype(int).tolist(),
-            user_features["user_idx"].astype(int).tolist()
-        ))
-        self.movie_id_to_idx = dict(zip(
-            item_features["movie_id"].astype(int).tolist(),
-            item_features["item_idx"].astype(int).tolist()
-        ))
-        self.idx_to_movie_id = {item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()}  # noqa: E501
+        self.user_id_to_idx = dict(
+            zip(
+                user_features["user_id"].astype(int).tolist(),
+                user_features["user_idx"].astype(int).tolist(),
+            )
+        )
+        self.movie_id_to_idx = dict(
+            zip(
+                item_features["movie_id"].astype(int).tolist(),
+                item_features["item_idx"].astype(int).tolist(),
+            )
+        )
+        self.idx_to_movie_id = {
+            item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()
+        }  # noqa: E501
         return self
 
     def recommend(
@@ -57,7 +63,11 @@ class NCFWrapper(BaseRecommender):
         if user_idx is None:
             return candidate_item_ids[:k]
 
-        candidate_indices = [self.movie_id_to_idx[item_id] for item_id in candidate_item_ids if item_id in self.movie_id_to_idx]  # noqa: E501
+        candidate_indices = [
+            self.movie_id_to_idx[item_id]
+            for item_id in candidate_item_ids
+            if item_id in self.movie_id_to_idx
+        ]  # noqa: E501
         if not candidate_indices:
             return []
 
@@ -68,6 +78,7 @@ class NCFWrapper(BaseRecommender):
             scores = self.model(user_tensor, item_tensor).numpy()
 
         import numpy as np
+
         order = np.argsort(-scores, kind="stable")
         ranked_indices = [candidate_indices[pos] for pos in order[:k]]
 
@@ -83,16 +94,24 @@ def main():  # noqa: D103
         metadata = json.load(f)
 
     num_users_meta = metadata.get("num_users")
-    num_users = int(num_users_meta) if num_users_meta is not None else int(test_df["user_id_idx"].max() + 1)  # noqa: E501
+    num_users = (
+        int(num_users_meta)
+        if num_users_meta is not None
+        else int(test_df["user_id_idx"].max() + 1)
+    )  # noqa: E501
 
     num_items_meta = metadata.get("num_items")
-    num_items = int(num_items_meta) if num_items_meta is not None else int(test_df["item_id_idx"].max() + 1)  # noqa: E501
+    num_items = (
+        int(num_items_meta)
+        if num_items_meta is not None
+        else int(test_df["item_id_idx"].max() + 1)
+    )  # noqa: E501
 
     print("Carregando modelo treinado...")
     model = NCF(
         num_users=num_users,
         num_items=num_items,
-        embedding_dim=settings.model.embedding_dim
+        embedding_dim=settings.model.embedding_dim,
     )
 
     checkpoint_path = Path(settings.models_dir) / "ncf_best.pth"
@@ -100,7 +119,9 @@ def main():  # noqa: D103
         print("Erro: Checkpoint não encontrado. Execute o treinamento primeiro.")
         return
 
-    model.load_state_dict(torch.load(checkpoint_path, map_location="cpu", weights_only=True))  # noqa: E501
+    model.load_state_dict(
+        torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    )  # noqa: E501
     wrapped_model = NCFWrapper(model)
 
     print("Iniciando avaliação do modelo neural...")
@@ -115,6 +136,7 @@ def main():  # noqa: D103
 
     print("\nResultados do NCF:")
     print(results["aggregate"])
+
 
 if __name__ == "__main__":
     main()

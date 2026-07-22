@@ -43,10 +43,18 @@ def main():  # noqa: D103
     # Extrai tamanhos do vocabulário do metadata original
     # (Se não estiver no metadata, calcula do tamanho máximo)
     num_users_meta = metadata.get("num_users")
-    num_users = int(num_users_meta) if num_users_meta is not None else int(max(train_df["user_id_idx"].max(), val_df["user_id_idx"].max()) + 1)  # noqa: E501
+    num_users = (
+        int(num_users_meta)
+        if num_users_meta is not None
+        else int(max(train_df["user_id_idx"].max(), val_df["user_id_idx"].max()) + 1)
+    )  # noqa: E501
 
     num_items_meta = metadata.get("num_items")
-    num_items = int(num_items_meta) if num_items_meta is not None else int(max(train_df["item_id_idx"].max(), val_df["item_id_idx"].max()) + 1)  # noqa: E501
+    num_items = (
+        int(num_items_meta)
+        if num_items_meta is not None
+        else int(max(train_df["item_id_idx"].max(), val_df["item_id_idx"].max()) + 1)
+    )  # noqa: E501
 
     print(f"Num Users: {num_users}, Num Items: {num_items}")
 
@@ -83,7 +91,7 @@ def main():  # noqa: D103
         early_stopping_patience=settings.model.early_stopping_patience,
         checkpoint_path=str(checkpoint_path),
         # Detecta cuda ou mps para mac, ou cpu
-        device="cpu", # Deixando fallback CPU explícito para não ter erro no Mac dependendo da versão  # noqa: E501
+        device="cpu",  # Deixando fallback CPU explícito para não ter erro no Mac dependendo da versão  # noqa: E501
     )
 
     print("Iniciando rotina de treinamento com MLflow...")

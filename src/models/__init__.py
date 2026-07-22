@@ -1,4 +1,9 @@
-"""Models module placeholder.
+"""Modelos de recomendação do projeto."""
 
-This package will contain the model architectures and related definitions.
-"""
+from .baselines import BaseRecommender, ItemKNNRecommender, PopularityRecommender
+
+__all__ = [
+    "BaseRecommender",
+    "ItemKNNRecommender",
+    "PopularityRecommender",
+]

@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "k": 10,
+  "fit_split": "train+validation",
+  "evaluation_split": "test",
+  "same_conditions": true,
+  "metrics": [
+    "precision_at_k",
+    "recall_at_k",
+    "hit_rate_at_k",
+    "ndcg_at_k",
+    "mrr_at_k",
+    "catalog_coverage_at_k"
+  ]
+}

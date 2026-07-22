@@ -162,5 +162,7 @@ class NCFTrainingStrategy(TrainingStrategy):
 
     def load_checkpoint(self, model: nn.Module) -> nn.Module:
         """Carrega os pesos salvos para o modelo."""
-        model.load_state_dict(torch.load(self.checkpoint_path, map_location=self.device))  # noqa: E501
+        model.load_state_dict(
+            torch.load(self.checkpoint_path, map_location=self.device)
+        )  # noqa: E501
         return model

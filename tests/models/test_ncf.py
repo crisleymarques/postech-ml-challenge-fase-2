@@ -24,10 +24,6 @@ def test_ncf_output_shape():
 
 def test_ncf_different_layers():
     """Testa se o modelo suporta configuração diferente de hidden layers."""
-    model = NCF(
-        num_users=10,
-        num_items=10,
-        hidden_layers=[32, 16]
-    )
+    model = NCF(num_users=10, num_items=10, hidden_layers=[32, 16])
     # 2 linear, 2 relu, 2 dropout
     assert len(model.mlp) == 6

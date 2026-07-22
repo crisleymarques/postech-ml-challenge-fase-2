@@ -47,7 +47,9 @@ class InteractionDataset(Dataset):
         """Retorna o número total de exemplos no dataset."""
         return len(self.users)
 
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # noqa: E501
+    def __getitem__(
+        self, index: int
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # noqa: E501
         """Recupera a interação dado um índice.
 
         Args:

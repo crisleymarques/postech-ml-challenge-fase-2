@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,6 +16,8 @@ from src.data.movielens_pipeline import (
     MovieLensBundle,
     build_feature_tables,
     clean_movielens_data,
+    load_clean_artifacts,
+    persist_clean_artifacts,
     profile_raw_data,
     temporal_leave_last_k_out,
 )
@@ -83,6 +86,26 @@ class MovieLensPipelineTests(unittest.TestCase):
             any(column.startswith("genre_") for column in feature_tables["item_features"].columns)
         )
         self.assertEqual(feature_tables["metadata"]["n_users"], 2)
+
+    def test_persist_and_load_clean_artifacts_preserva_bundle_limpo(self) -> None:
+        clean_bundle, quality_report = clean_movielens_data(self.bundle)
+        raw_profile = profile_raw_data(self.bundle)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            summary = persist_clean_artifacts(
+                bundle=clean_bundle,
+                raw_profile=raw_profile,
+                quality_report=quality_report,
+                output_dir=temp_dir,
+            )
+            loaded = load_clean_artifacts(temp_dir)
+
+        self.assertEqual(summary["n_ratings"], len(clean_bundle.ratings))
+        self.assertEqual(len(loaded["bundle"].ratings), len(clean_bundle.ratings))
+        self.assertEqual(len(loaded["bundle"].users), len(clean_bundle.users))
+        self.assertEqual(len(loaded["bundle"].movies), len(clean_bundle.movies))
+        self.assertIn("genres_list", loaded["bundle"].movies.columns)
+        self.assertEqual(loaded["quality_report"]["rows_removed"]["ratings"], 2)
 
     def test_temporal_leave_last_k_out_separa_sem_vazamento_temporal(self) -> None:
         clean_bundle, _ = clean_movielens_data(self.bundle)

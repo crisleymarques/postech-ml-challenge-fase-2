@@ -92,18 +92,15 @@ def _build_ground_truth(interactions: pd.DataFrame) -> dict[int, set[int]]:
     )
 
 
-def evaluate_recommender(
+def evaluate_fitted_recommender(
     recommender: BaseRecommender,
     fit_interactions: pd.DataFrame,
     test_interactions: pd.DataFrame,
-    user_features: pd.DataFrame,
     item_features: pd.DataFrame,
     k: int = GLOBAL_EVAL_K,
 ) -> tuple[dict, pd.DataFrame]:
     if k <= 0:
         raise ValueError("k precisa ser positivo.")
-
-    recommender.fit(fit_interactions, user_features, item_features)
 
     all_item_ids = item_features["movie_id"].astype(int).tolist()
     seen_items = _build_seen_items(fit_interactions)
@@ -148,6 +145,26 @@ def evaluate_recommender(
 
     return aggregate_results, per_user_results
 
+
+def evaluate_recommender(
+    recommender: BaseRecommender,
+    fit_interactions: pd.DataFrame,
+    test_interactions: pd.DataFrame,
+    user_features: pd.DataFrame,
+    item_features: pd.DataFrame,
+    k: int = GLOBAL_EVAL_K,
+) -> tuple[dict, pd.DataFrame]:
+    if k <= 0:
+        raise ValueError("k precisa ser positivo.")
+
+    recommender.fit(fit_interactions, user_features, item_features)
+    return evaluate_fitted_recommender(
+        recommender=recommender,
+        fit_interactions=fit_interactions,
+        test_interactions=test_interactions,
+        item_features=item_features,
+        k=k,
+    )
 
 def run_benchmark(
     recommenders: list[BaseRecommender],
@@ -200,6 +217,74 @@ def run_benchmark(
         "fit_split": "train+validation",
         "evaluation_split": "test",
         "same_conditions": True,
+        "metrics": [
+            "precision_at_k",
+            "recall_at_k",
+            "hit_rate_at_k",
+            "ndcg_at_k",
+            "mrr_at_k",
+            "catalog_coverage_at_k",
+        ],
+    }
+    with (evaluation_output_dir / "evaluation_protocol.json").open("w", encoding="utf-8") as protocol_file:
+        json.dump(protocol, protocol_file, indent=2, ensure_ascii=False)
+
+    return {
+        "aggregate": aggregate_df,
+        "detailed": detailed_df,
+    }
+
+
+def run_benchmark_with_fitted(
+    recommenders: list[BaseRecommender],
+    processed_dir: str | Path = "data/processed/movielens",
+    output_dir: str | Path = "data/processed/movielens/evaluation",
+    k: int = GLOBAL_EVAL_K,
+    seed: int = GLOBAL_SEED,
+) -> dict[str, pd.DataFrame]:
+    set_global_seed(seed)
+
+    dataset = load_processed_movielens_artifacts(processed_dir)
+    fit_interactions = pd.concat([dataset["train"], dataset["validation"]], ignore_index=True)
+    test_interactions = dataset["test"]
+    item_features = dataset["item_features"]
+
+    evaluation_output_dir = ensure_output_dir(output_dir)
+    aggregate_rows: list[dict] = []
+    detailed_frames: list[pd.DataFrame] = []
+
+    for recommender in recommenders:
+        aggregate_result, per_user_results = evaluate_fitted_recommender(
+            recommender=recommender,
+            fit_interactions=fit_interactions,
+            test_interactions=test_interactions,
+            item_features=item_features,
+            k=k,
+        )
+        aggregate_rows.append(aggregate_result)
+        detailed_frames.append(per_user_results)
+
+    aggregate_df = pd.DataFrame(aggregate_rows).sort_values(
+        by=["ndcg_at_k", "mrr_at_k", "catalog_coverage_at_k"],
+        ascending=[False, False, False],
+    )
+    detailed_df = pd.concat(detailed_frames, ignore_index=True)
+
+    aggregate_df.to_csv(evaluation_output_dir / "baseline_results.csv", index=False)
+    detailed_df.to_json(
+        evaluation_output_dir / "baseline_recommendations.json",
+        orient="records",
+        force_ascii=False,
+        indent=2,
+    )
+
+    protocol = {
+        "seed": seed,
+        "k": k,
+        "fit_split": "train+validation",
+        "evaluation_split": "test",
+        "same_conditions": True,
+        "models_are_pretrained": True,
         "metrics": [
             "precision_at_k",
             "recall_at_k",

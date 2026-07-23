@@ -1,0 +1,33 @@
+seed: 42
+
+data:
+  raw_dir: data/raw
+  interim_dir: data/interim/movielens
+  processed_dir: data/processed/movielens
+  evaluation_dir: reports/evaluation/movielens
+  model_dir: models/baselines
+
+split:
+  validation_k: 1
+  test_k: 1
+
+train:
+  use_validation_in_fit: true
+  baselines:
+    popularity: true
+    item_knn_sklearn: true
+  item_knn:
+    n_neighbors: 40
+
+evaluate:
+  k: 10
+
+reports:
+  preprocess_metrics: reports/metrics/preprocess_metrics.json
+  feature_eng_metrics: reports/metrics/feature_eng_metrics.json
+  train_metrics: reports/metrics/train_metrics.json
+  evaluation_metrics: reports/metrics/evaluation_metrics.json
+
+dvc:
+  remote_name: localstorage
+  remote_url: storage/dvc-remote

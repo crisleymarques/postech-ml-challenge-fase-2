@@ -239,6 +239,64 @@ def clean_movielens_data(bundle: MovieLensBundle) -> tuple[MovieLensBundle, dict
     return MovieLensBundle(ratings=ratings, users=users, movies=movies), quality_report
 
 
+def persist_clean_artifacts(
+    bundle: MovieLensBundle,
+    raw_profile: dict,
+    quality_report: dict,
+    output_dir: str | Path,
+    seed: int = GLOBAL_SEED,
+) -> dict:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    bundle.ratings.to_csv(output_dir / "ratings_clean.csv", index=False)
+    bundle.users.to_csv(output_dir / "users_clean.csv", index=False)
+    bundle.movies.to_csv(output_dir / "movies_clean.csv", index=False)
+
+    preprocess_summary = {
+        "seed": seed,
+        "n_ratings": int(len(bundle.ratings)),
+        "n_users": int(len(bundle.users)),
+        "n_movies": int(len(bundle.movies)),
+        "raw_profile": raw_profile,
+        "quality_report": quality_report,
+    }
+
+    with (output_dir / "raw_profile.json").open("w", encoding="utf-8") as raw_profile_file:
+        json.dump(raw_profile, raw_profile_file, indent=2, ensure_ascii=False)
+
+    with (output_dir / "quality_report.json").open("w", encoding="utf-8") as quality_report_file:
+        json.dump(quality_report, quality_report_file, indent=2, ensure_ascii=False)
+
+    with (output_dir / "preprocess_summary.json").open("w", encoding="utf-8") as summary_file:
+        json.dump(preprocess_summary, summary_file, indent=2, ensure_ascii=False)
+
+    return preprocess_summary
+
+
+def load_clean_artifacts(input_dir: str | Path) -> dict[str, MovieLensBundle | dict]:
+    input_dir = Path(input_dir)
+    ratings = pd.read_csv(input_dir / "ratings_clean.csv", parse_dates=["rated_at"])
+    users = pd.read_csv(input_dir / "users_clean.csv")
+    movies = pd.read_csv(input_dir / "movies_clean.csv")
+
+    if "genres_list" not in movies.columns:
+        movies["genres_list"] = movies["genres"].astype(str).str.split("|")
+    else:
+        movies["genres_list"] = movies["genres"].astype(str).str.split("|")
+
+    raw_profile = json.loads((input_dir / "raw_profile.json").read_text(encoding="utf-8"))
+    quality_report = json.loads((input_dir / "quality_report.json").read_text(encoding="utf-8"))
+    preprocess_summary = json.loads((input_dir / "preprocess_summary.json").read_text(encoding="utf-8"))
+
+    return {
+        "bundle": MovieLensBundle(ratings=ratings, users=users, movies=movies),
+        "raw_profile": raw_profile,
+        "quality_report": quality_report,
+        "preprocess_summary": preprocess_summary,
+    }
+
+
 def build_feature_tables(bundle: MovieLensBundle) -> dict[str, pd.DataFrame]:
     ratings = bundle.ratings.copy()
     users = bundle.users.copy()

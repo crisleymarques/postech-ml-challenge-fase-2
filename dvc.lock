@@ -1,0 +1,199 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python scripts/dvc_preprocess.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: d620f87f39ea99367b7790cd21a19516.dir
+      size: 25909939
+      nfiles: 4
+    - path: params.yaml
+      hash: md5
+      md5: 12d126f619d791f60619a1c5b6d654eb
+      size: 698
+    - path: scripts/dvc_preprocess.py
+      hash: md5
+      md5: eb72378f3dd2af67296a10acd7f48c8e
+      size: 1981
+    - path: src/data/movielens_pipeline.py
+      hash: md5
+      md5: d6e42a911251b5a8322e7ba1aa6be245
+      size: 19456
+    - path: src/pipeline_config.py
+      hash: md5
+      md5: 6f2677353c7f0c1643f85ba570368be7
+      size: 454
+    params:
+      params.yaml:
+        data.interim_dir: data/interim/movielens
+        data.raw_dir: data/raw
+        reports.preprocess_metrics: reports/metrics/preprocess_metrics.json
+        seed: 42
+    outs:
+    - path: data/interim/movielens
+      hash: md5
+      md5: cc28516c402a01a08ab1e65c1abed0a6.dir
+      size: 53015419
+      nfiles: 6
+    - path: reports/metrics/preprocess_metrics.json
+      hash: md5
+      md5: 8501af52ac5165f3003061be73829429
+      size: 191
+  feature_eng:
+    cmd: python scripts/dvc_feature_eng.py
+    deps:
+    - path: data/interim/movielens
+      hash: md5
+      md5: cc28516c402a01a08ab1e65c1abed0a6.dir
+      size: 53015419
+      nfiles: 6
+    - path: params.yaml
+      hash: md5
+      md5: 12d126f619d791f60619a1c5b6d654eb
+      size: 698
+    - path: scripts/dvc_feature_eng.py
+      hash: md5
+      md5: 5b1a62c1ebe0b0ad8231425eb8fd9c93
+      size: 2171
+    - path: src/data/movielens_pipeline.py
+      hash: md5
+      md5: d6e42a911251b5a8322e7ba1aa6be245
+      size: 19456
+    - path: src/pipeline_config.py
+      hash: md5
+      md5: 6f2677353c7f0c1643f85ba570368be7
+      size: 454
+    params:
+      params.yaml:
+        data.interim_dir: data/interim/movielens
+        data.processed_dir: data/processed/movielens
+        reports.feature_eng_metrics: reports/metrics/feature_eng_metrics.json
+        seed: 42
+        split.test_k: 1
+        split.validation_k: 1
+    outs:
+    - path: data/processed/movielens
+      hash: md5
+      md5: 8eb87b8fb85653485bce1b027b6dc7c3.dir
+      size: 125481390
+      nfiles: 7
+    - path: reports/metrics/feature_eng_metrics.json
+      hash: md5
+      md5: 2b46c0bc7a502eea19c0e8ec8ab806f9
+      size: 159
+  train:
+    cmd: python scripts/dvc_train.py
+    deps:
+    - path: data/processed/movielens
+      hash: md5
+      md5: 8eb87b8fb85653485bce1b027b6dc7c3.dir
+      size: 125481390
+      nfiles: 7
+    - path: params.yaml
+      hash: md5
+      md5: 12d126f619d791f60619a1c5b6d654eb
+      size: 698
+    - path: scripts/dvc_train.py
+      hash: md5
+      md5: 9a2217e3d01da650c2c5c2eb05b13254
+      size: 3026
+    - path: src/data/movielens_pipeline.py
+      hash: md5
+      md5: d6e42a911251b5a8322e7ba1aa6be245
+      size: 19456
+    - path: src/evaluation/recommender_evaluation.py
+      hash: md5
+      md5: 9916cb2612de9c2289dbe28d88ec4bbb
+      size: 10905
+    - path: src/models/baselines.py
+      hash: md5
+      md5: 82933ddaebdc0fbc091788fe242d8b08
+      size: 7964
+    - path: src/models/model_persistence.py
+      hash: md5
+      md5: 3038db78efa1ae0ade7cf76c306b9b13
+      size: 1707
+    - path: src/pipeline_config.py
+      hash: md5
+      md5: 6f2677353c7f0c1643f85ba570368be7
+      size: 454
+    params:
+      params.yaml:
+        data.model_dir: models/baselines
+        data.processed_dir: data/processed/movielens
+        reports.train_metrics: reports/metrics/train_metrics.json
+        seed: 42
+        train.baselines.item_knn_sklearn: true
+        train.baselines.popularity: true
+        train.item_knn.n_neighbors: 40
+        train.use_validation_in_fit: true
+    outs:
+    - path: models/baselines
+      hash: md5
+      md5: 884d83417c2d8d46ee0dd8b03f67ca84.dir
+      size: 9282880
+      nfiles: 3
+    - path: reports/metrics/train_metrics.json
+      hash: md5
+      md5: bf5b86f0bab76fcc81b213b6165e56c9
+      size: 144
+  evaluate:
+    cmd: python scripts/dvc_evaluate.py
+    deps:
+    - path: data/processed/movielens
+      hash: md5
+      md5: 8eb87b8fb85653485bce1b027b6dc7c3.dir
+      size: 125481390
+      nfiles: 7
+    - path: models/baselines
+      hash: md5
+      md5: 884d83417c2d8d46ee0dd8b03f67ca84.dir
+      size: 9282880
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 12d126f619d791f60619a1c5b6d654eb
+      size: 698
+    - path: scripts/dvc_evaluate.py
+      hash: md5
+      md5: 65e16e8f74d23e0a38d688819033ceb1
+      size: 1796
+    - path: src/data/movielens_pipeline.py
+      hash: md5
+      md5: d6e42a911251b5a8322e7ba1aa6be245
+      size: 19456
+    - path: src/evaluation/recommender_evaluation.py
+      hash: md5
+      md5: 9916cb2612de9c2289dbe28d88ec4bbb
+      size: 10905
+    - path: src/models/baselines.py
+      hash: md5
+      md5: 82933ddaebdc0fbc091788fe242d8b08
+      size: 7964
+    - path: src/models/model_persistence.py
+      hash: md5
+      md5: 3038db78efa1ae0ade7cf76c306b9b13
+      size: 1707
+    - path: src/pipeline_config.py
+      hash: md5
+      md5: 6f2677353c7f0c1643f85ba570368be7
+      size: 454
+    params:
+      params.yaml:
+        data.evaluation_dir: reports/evaluation/movielens
+        data.model_dir: models/baselines
+        data.processed_dir: data/processed/movielens
+        evaluate.k: 10
+        reports.evaluation_metrics: reports/metrics/evaluation_metrics.json
+        seed: 42
+    outs:
+    - path: reports/evaluation/movielens
+      hash: md5
+      md5: 81fe02297107cf1f6bf78ffb99fa3c5a.dir
+      size: 4426672
+      nfiles: 3
+    - path: reports/metrics/evaluation_metrics.json
+      hash: md5
+      md5: d7cbcb171c77daa5c45c4ee56a448338
+      size: 1098

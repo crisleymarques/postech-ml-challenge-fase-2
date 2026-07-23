@@ -47,6 +47,72 @@ uv run scripts/validate_env.py
 
 ---
 
+## Pipeline Reproduzível com DVC
+
+O projeto possui um pipeline completo com DVC para versionamento de dados e reprodução das etapas de preparação, treino e avaliação.
+
+### Stages do Pipeline
+
+- `preprocess`: carrega o MovieLens bruto, executa profiling, limpeza e salva artefatos intermediários em `data/interim/movielens/`
+- `feature_eng`: gera features, índices, splits temporais sem vazamento e salva artefatos processados em `data/processed/movielens/`
+- `train`: treina os baselines configurados e salva os modelos em `models/baselines/`
+- `evaluate`: avalia todos os modelos treinados sob o mesmo protocolo e salva relatórios em `reports/evaluation/movielens/`
+
+Os parâmetros do pipeline ficam em `params.yaml`.
+
+### Configuração do Remote
+
+O repositório já vem configurado com um remote local padrão:
+
+```bash
+python -m dvc remote list
+```
+
+O remote default aponta para `storage/dvc-remote`, que fica ignorado pelo Git.
+
+Se quiser reconfigurar para outro diretório local:
+
+```bash
+python -m dvc remote remove localstorage
+python -m dvc remote add -d localstorage storage/dvc-remote
+```
+
+Se quiser usar S3:
+
+```bash
+python -m dvc remote modify localstorage url s3://meu-bucket/dados
+python -m dvc remote modify --local localstorage access_key_id <AWS_ACCESS_KEY_ID>
+python -m dvc remote modify --local localstorage secret_access_key <AWS_SECRET_ACCESS_KEY>
+```
+
+### Comandos Principais
+
+Baixar dados e artefatos versionados:
+
+```bash
+python -m dvc pull
+```
+
+Reproduzir o pipeline completo:
+
+```bash
+python -m dvc repro
+```
+
+Enviar novos artefatos para o remote:
+
+```bash
+python -m dvc push
+```
+
+### Observações de Versionamento
+
+- `data/raw` é versionado pelo DVC via `data/raw.dvc`
+- artefatos grandes de `data/interim`, `data/processed`, `models/baselines` e `reports/evaluation` ficam fora do Git e sob controle do DVC
+- métricas consolidadas por stage ficam em `reports/metrics/`
+
+---
+
 ## Qualidade de Código & Git Hooks
 
 ### Ruff Linter & Formatter

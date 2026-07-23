@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.evaluation.recommender_evaluation import (
     catalog_coverage_at_k,
+    evaluate_fitted_recommender,
     evaluate_recommender,
     hit_rate_at_k,
     mrr_at_k,
@@ -21,6 +23,7 @@ from src.evaluation.recommender_evaluation import (
     recall_at_k,
 )
 from src.models.baselines import ItemKNNRecommender, PopularityRecommender
+from src.models.model_persistence import load_trained_recommenders, save_trained_recommenders
 
 
 class RecommenderEvaluationTests(unittest.TestCase):
@@ -103,6 +106,39 @@ class RecommenderEvaluationTests(unittest.TestCase):
         self.assertIn("catalog_coverage_at_k", aggregate)
         self.assertEqual(len(detailed), 3)
         self.assertIn("recommended_items", detailed.columns)
+
+    def test_evaluate_fitted_recommender_reutiliza_modelo_pre_treinado(self) -> None:
+        model = PopularityRecommender().fit(self.train, self.user_features, self.item_features)
+
+        aggregate, detailed = evaluate_fitted_recommender(
+            recommender=model,
+            fit_interactions=self.train,
+            test_interactions=self.test,
+            item_features=self.item_features,
+            k=2,
+        )
+
+        self.assertEqual(aggregate["model_name"], "popularity")
+        self.assertEqual(aggregate["n_users_evaluated"], 3)
+        self.assertEqual(len(detailed), 3)
+
+    def test_model_persistence_salva_e_recarrega_recomendadores_treinados(self) -> None:
+        recommenders = [
+            PopularityRecommender().fit(self.train, self.user_features, self.item_features),
+            ItemKNNRecommender(n_neighbors=2).fit(self.train, self.user_features, self.item_features),
+        ]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = save_trained_recommenders(
+                recommenders=recommenders,
+                output_dir=temp_dir,
+                training_summary={"fit_split": "train"},
+            )
+            loaded_recommenders, training_summary = load_trained_recommenders(temp_dir)
+
+        self.assertEqual(len(payload["models"]), 2)
+        self.assertEqual(training_summary["fit_split"], "train")
+        self.assertEqual([model.model_name for model in loaded_recommenders], ["popularity", "item_knn_sklearn"])
 
 
 if __name__ == "__main__":

@@ -46,14 +46,14 @@ def main():  # noqa: D103
     num_users = (
         int(num_users_meta)
         if num_users_meta is not None
-        else int(max(train_df["user_id_idx"].max(), val_df["user_id_idx"].max()) + 1)
+        else int(max(train_df["user_idx"].max(), val_df["user_idx"].max()) + 1)
     )  # noqa: E501
 
     num_items_meta = metadata.get("num_items")
     num_items = (
         int(num_items_meta)
         if num_items_meta is not None
-        else int(max(train_df["item_id_idx"].max(), val_df["item_id_idx"].max()) + 1)
+        else int(max(train_df["item_idx"].max(), val_df["item_idx"].max()) + 1)
     )  # noqa: E501
 
     print(f"Num Users: {num_users}, Num Items: {num_items}")

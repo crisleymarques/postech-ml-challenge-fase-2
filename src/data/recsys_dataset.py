@@ -15,8 +15,8 @@ class InteractionDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
-        user_col: str = "user_id_idx",
-        item_col: str = "item_id_idx",
+        user_col: str = "user_idx",
+        item_col: str = "item_idx",
         interaction_col: str | None = "interaction",
     ) -> None:
         """Inicializa o Dataset convertendo as colunas para tensores PyTorch.

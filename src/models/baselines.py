@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -28,6 +29,7 @@ class BaseRecommender(ABC):
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
     ) -> BaseRecommender:
+        """Treina o modelo de recomendação com base nas interações."""
         raise NotImplementedError
 
     @abstractmethod
@@ -37,6 +39,7 @@ class BaseRecommender(ABC):
         candidate_item_ids: list[int],
         k: int,
     ) -> list[int]:
+        """Gera um ranking top-K para o usuário a partir dos candidatos."""
         raise NotImplementedError
 
 
@@ -44,6 +47,7 @@ class PopularityRecommender(BaseRecommender):
     """Baseline simples baseado na popularidade histórica dos itens."""
 
     def __init__(self) -> None:
+        """Inicializa o modelo de recomendação por popularidade."""
         self.model_name = "popularity"
         self.rankings: list[int] = []
 
@@ -53,30 +57,27 @@ class PopularityRecommender(BaseRecommender):
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
     ) -> PopularityRecommender:
+        """Calcula a popularidade dos itens e armazena o ranking global."""
         del user_features
 
-        popularity = (
-            interactions.groupby("movie_id", as_index=False)
-            .agg(
-                interaction_count=("user_id", "size"),
-                mean_rating=("rating", "mean"),
-            )
-            .sort_values(
-                by=["interaction_count", "mean_rating", "movie_id"],
-                ascending=[False, False, True],
-            )
+        popularity = interactions.groupby("movie_id", as_index=False).agg(
+            interaction_count=("user_id", "size"),
+            mean_rating=("rating", "mean"),
+        )
+        popularity = popularity.sort_values(
+            by=["interaction_count", "mean_rating", "movie_id"],
+            ascending=[False, False, True],
         )
 
-        seen_items = set(popularity["movie_id"].tolist())
+        seen_items = list(popularity["movie_id"])
         cold_items = item_features.loc[
             ~item_features["movie_id"].isin(seen_items), ["movie_id"]
         ].copy()
         cold_items["interaction_count"] = 0
         cold_items["mean_rating"] = 0.0
 
-        full_ranking = pd.concat(
-            [popularity, cold_items], ignore_index=True
-        ).sort_values(
+        full_ranking = pd.concat([popularity, cold_items], ignore_index=True)
+        full_ranking = full_ranking.sort_values(
             by=["interaction_count", "mean_rating", "movie_id"],
             ascending=[False, False, True],
         )
@@ -89,6 +90,7 @@ class PopularityRecommender(BaseRecommender):
         candidate_item_ids: list[int],
         k: int,
     ) -> list[int]:
+        """Recomenda os itens mais populares dentre os candidatos."""
         del user_id
 
         candidate_set = set(candidate_item_ids)
@@ -105,6 +107,7 @@ class ItemKNNRecommender(BaseRecommender):
     """Baseline com Scikit-Learn baseado em similaridade item-item via KNN."""
 
     def __init__(self, n_neighbors: int = 40) -> None:
+        """Inicializa o modelo KNN baseado em itens com Scikit-Learn."""
         if not SKLEARN_MODELING_AVAILABLE:
             raise ModuleNotFoundError(
                 "Scikit-Learn não está disponível para o baseline ItemKNNRecommender."
@@ -125,13 +128,14 @@ class ItemKNNRecommender(BaseRecommender):
         user_features: pd.DataFrame,
         item_features: pd.DataFrame,
     ) -> ItemKNNRecommender:
+        """Constrói a matriz de similaridade item-item usando NearestNeighbors."""
         self.user_id_to_idx = {
-            int(row.user_id): int(row.user_idx)
-            for row in user_features[["user_id", "user_idx"]].itertuples(index=False)
+            int(u): int(idx)
+            for u, idx in zip(user_features["user_id"], user_features["user_idx"])
         }
         self.movie_id_to_idx = {
-            int(row.movie_id): int(row.item_idx)
-            for row in item_features[["movie_id", "item_idx"]].itertuples(index=False)
+            int(m): int(idx)
+            for m, idx in zip(item_features["movie_id"], item_features["item_idx"])
         }
         self.idx_to_movie_id = {
             item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()
@@ -145,15 +149,18 @@ class ItemKNNRecommender(BaseRecommender):
             np.float32
         )
 
-        self.user_item_matrix = coo_matrix(
-            (values, (rows, cols)), shape=(n_users, n_items)
-        ).tocsr()
+        self.user_item_matrix = cast(
+            csr_matrix,
+            coo_matrix((values, (rows, cols)), shape=(n_users, n_items)).tocsr(),
+        )
 
+        assert NearestNeighbors is not None
         knn = NearestNeighbors(
             metric="cosine",
             algorithm="brute",
             n_neighbors=min(self.n_neighbors + 1, n_items),
         )
+        assert self.user_item_matrix is not None
         item_user_matrix = self.user_item_matrix.T.tocsr()
         knn.fit(item_user_matrix)
         distances, indices = knn.kneighbors(item_user_matrix, return_distance=True)
@@ -172,13 +179,16 @@ class ItemKNNRecommender(BaseRecommender):
                     similarity_cols.append(int(neighbor_idx))
                     similarity_data.append(similarity)
 
-        self.item_similarity_matrix = coo_matrix(
-            (
-                np.asarray(similarity_data, dtype=np.float32),
-                (similarity_rows, similarity_cols),
-            ),
-            shape=(n_items, n_items),
-        ).tocsr()
+        self.item_similarity_matrix = cast(
+            csr_matrix,
+            coo_matrix(
+                (
+                    np.asarray(similarity_data, dtype=np.float32),
+                    (similarity_rows, similarity_cols),
+                ),
+                shape=(n_items, n_items),
+            ).tocsr(),
+        )
 
         popularity_counts = (
             interactions.groupby("item_idx")["user_id"]
@@ -189,7 +199,7 @@ class ItemKNNRecommender(BaseRecommender):
         max_count = popularity_counts.max() if len(popularity_counts) else 1.0
         if max_count == 0:
             max_count = 1.0
-        self.popularity_scores = popularity_counts / max_count
+        self.popularity_scores = cast(np.ndarray, popularity_counts / max_count)
         return self
 
     def recommend(
@@ -198,6 +208,7 @@ class ItemKNNRecommender(BaseRecommender):
         candidate_item_ids: list[int],
         k: int,
     ) -> list[int]:
+        """Gera recomendações baseadas na similaridade com o perfil do usuário."""
         if (
             self.user_item_matrix is None
             or self.item_similarity_matrix is None
@@ -207,7 +218,7 @@ class ItemKNNRecommender(BaseRecommender):
                 "O modelo precisa ser treinado antes de gerar recomendações."
             )
 
-        user_idx = self.user_id_to_idx.get(int(user_id))
+        user_idx = self.user_id_to_idx.get(user_id)
         if user_idx is None:
             return candidate_item_ids[:k]
 
@@ -220,10 +231,11 @@ class ItemKNNRecommender(BaseRecommender):
             return []
 
         user_profile = self.user_item_matrix.getrow(user_idx)
+        pop_scores = self.popularity_scores
         if user_profile.nnz == 0:
             popularity_order = sorted(
                 candidate_indices,
-                key=lambda idx: (self.popularity_scores[idx], -idx),
+                key=lambda idx: (pop_scores[idx], -idx),
                 reverse=True,
             )
             return [self.idx_to_movie_id[idx] for idx in popularity_order[:k]]
@@ -240,6 +252,7 @@ class ItemKNNRecommender(BaseRecommender):
 
 
 def ensure_output_dir(path: str | Path) -> Path:
+    """Garante que o diretório de saída exista, criando-o se necessário."""
     output_dir = Path(path)
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir

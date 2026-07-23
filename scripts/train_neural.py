@@ -29,7 +29,8 @@ def load_data(data_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, 
     return train_df, val_df, test_df, metadata
 
 
-def main():  # noqa: D103
+def main():
+    """Executa o treinamento do modelo neural NCF."""
     parser = argparse.ArgumentParser(description="Treina o modelo NCF.")
     parser.add_argument("--seed", type=int, default=42, help="Seed global.")
     args = parser.parse_args()
@@ -47,14 +48,14 @@ def main():  # noqa: D103
         int(num_users_meta)
         if num_users_meta is not None
         else int(max(train_df["user_idx"].max(), val_df["user_idx"].max()) + 1)
-    )  # noqa: E501
+    )
 
     num_items_meta = metadata.get("num_items")
     num_items = (
         int(num_items_meta)
         if num_items_meta is not None
         else int(max(train_df["item_idx"].max(), val_df["item_idx"].max()) + 1)
-    )  # noqa: E501
+    )
 
     print(f"Num Users: {num_users}, Num Items: {num_items}")
 
@@ -90,8 +91,7 @@ def main():  # noqa: D103
         learning_rate=settings.model.learning_rate,
         early_stopping_patience=settings.model.early_stopping_patience,
         checkpoint_path=str(checkpoint_path),
-        # Detecta cuda ou mps para mac, ou cpu
-        device="cpu",  # Deixando fallback CPU explícito para não ter erro no Mac dependendo da versão  # noqa: E501
+        device="cpu",
     )
 
     print("Iniciando rotina de treinamento com MLflow...")
@@ -104,7 +104,7 @@ def main():  # noqa: D103
         mlflow.log_param("num_users", num_users)
         mlflow.log_param("num_items", num_items)
 
-        history = strategy.train(model, train_loader, val_loader)  # noqa: F841
+        _ = strategy.train(model, train_loader, val_loader)
 
         # O melhor modelo foi salvo pelo Early Stopping. Rastrear no MLflow.
         if checkpoint_path.exists():

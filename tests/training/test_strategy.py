@@ -21,7 +21,8 @@ def dummy_data():
 
 
 @pytest.fixture
-def model():  # noqa: D103
+def model():
+    """Mock do modelo NCF para testes."""
     return NCF(num_users=10, num_items=10, embedding_dim=8)
 
 
@@ -61,4 +62,4 @@ def test_checkpoint_save_load(model, tmp_path):
     strategy.load_checkpoint(model)
     assert not torch.allclose(
         model.user_embedding.weight, torch.zeros_like(model.user_embedding.weight)
-    )  # noqa: E501
+    )

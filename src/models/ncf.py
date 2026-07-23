@@ -66,7 +66,7 @@ class NCF(nn.Module):
 
     def forward(
         self, user_indices: torch.Tensor, item_indices: torch.Tensor
-    ) -> torch.Tensor:  # noqa: E501
+    ) -> torch.Tensor:
         """Executa a passagem para frente (forward pass) do modelo.
 
         Args:

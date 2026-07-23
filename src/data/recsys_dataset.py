@@ -25,8 +25,8 @@ class InteractionDataset(Dataset):
             df: DataFrame contendo as interações.
             user_col: Nome da coluna que representa o ID (índice mapeado) do usuário.
             item_col: Nome da coluna que representa o ID (índice mapeado) do item.
-            interaction_col: Coluna alvo opcional. Se None, o dataset não retorna labels.
-        """  # noqa: E501
+            interaction_col: Coluna alvo opcional. Se None, não retorna labels.
+        """
         if user_col not in df.columns or item_col not in df.columns:
             raise ValueError(
                 f"As colunas '{user_col}' e '{item_col}' devem existir no DataFrame."
@@ -49,7 +49,7 @@ class InteractionDataset(Dataset):
 
     def __getitem__(
         self, index: int
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:  # noqa: E501
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Recupera a interação dado um índice.
 
         Args:

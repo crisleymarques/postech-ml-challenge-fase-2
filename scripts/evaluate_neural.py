@@ -49,7 +49,7 @@ class NCFWrapper(BaseRecommender):
         )
         self.idx_to_movie_id = {
             item_idx: movie_id for movie_id, item_idx in self.movie_id_to_idx.items()
-        }  # noqa: E501
+        }
         return self
 
     def recommend(
@@ -67,7 +67,7 @@ class NCFWrapper(BaseRecommender):
             self.movie_id_to_idx[item_id]
             for item_id in candidate_item_ids
             if item_id in self.movie_id_to_idx
-        ]  # noqa: E501
+        ]
         if not candidate_indices:
             return []
 
@@ -85,7 +85,8 @@ class NCFWrapper(BaseRecommender):
         return [self.idx_to_movie_id[idx] for idx in ranked_indices]
 
 
-def main():  # noqa: D103
+def main():
+    """Executa a avaliação do modelo neural comparando com baselines."""
     print("Carregando metadados...")
     processed_dir = Path(settings.data_dir) / "processed" / "movielens"
     test_df = pd.read_csv(processed_dir / "test_interactions.csv")
@@ -98,14 +99,14 @@ def main():  # noqa: D103
         int(num_users_meta)
         if num_users_meta is not None
         else int(test_df["user_idx"].max() + 1)
-    )  # noqa: E501
+    )
 
     num_items_meta = metadata.get("num_items")
     num_items = (
         int(num_items_meta)
         if num_items_meta is not None
         else int(test_df["item_idx"].max() + 1)
-    )  # noqa: E501
+    )
 
     print("Carregando modelo treinado...")
     model = NCF(
@@ -121,7 +122,7 @@ def main():  # noqa: D103
 
     model.load_state_dict(
         torch.load(checkpoint_path, map_location="cpu", weights_only=True)
-    )  # noqa: E501
+    )
     wrapped_model = NCFWrapper(model)
 
     print("Iniciando avaliação do modelo neural...")

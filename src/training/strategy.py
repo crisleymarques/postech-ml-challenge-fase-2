@@ -164,5 +164,5 @@ class NCFTrainingStrategy(TrainingStrategy):
         """Carrega os pesos salvos para o modelo."""
         model.load_state_dict(
             torch.load(self.checkpoint_path, map_location=self.device)
-        )  # noqa: E501
+        )
         return model

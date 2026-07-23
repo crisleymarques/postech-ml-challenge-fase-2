@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         description="Estágio do ambiente",
     )
     mlflow_tracking_uri: str = Field(
-        default="http://localhost:5000",
+        default="sqlite:///mlflow.db",
         description="URI de tracking do servidor MLflow",
     )
     mlflow_experiment_name: str = Field(

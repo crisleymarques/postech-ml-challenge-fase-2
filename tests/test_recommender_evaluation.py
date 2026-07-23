@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -27,12 +26,48 @@ class RecommenderEvaluationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.train = pd.DataFrame(
             [
-                {"user_id": 1, "movie_id": 101, "rating": 5.0, "user_idx": 0, "item_idx": 0},
-                {"user_id": 1, "movie_id": 102, "rating": 4.0, "user_idx": 0, "item_idx": 1},
-                {"user_id": 2, "movie_id": 101, "rating": 4.0, "user_idx": 1, "item_idx": 0},
-                {"user_id": 2, "movie_id": 103, "rating": 5.0, "user_idx": 1, "item_idx": 2},
-                {"user_id": 3, "movie_id": 102, "rating": 4.0, "user_idx": 2, "item_idx": 1},
-                {"user_id": 3, "movie_id": 104, "rating": 5.0, "user_idx": 2, "item_idx": 3},
+                {
+                    "user_id": 1,
+                    "movie_id": 101,
+                    "rating": 5.0,
+                    "user_idx": 0,
+                    "item_idx": 0,
+                },
+                {
+                    "user_id": 1,
+                    "movie_id": 102,
+                    "rating": 4.0,
+                    "user_idx": 0,
+                    "item_idx": 1,
+                },
+                {
+                    "user_id": 2,
+                    "movie_id": 101,
+                    "rating": 4.0,
+                    "user_idx": 1,
+                    "item_idx": 0,
+                },
+                {
+                    "user_id": 2,
+                    "movie_id": 103,
+                    "rating": 5.0,
+                    "user_idx": 1,
+                    "item_idx": 2,
+                },
+                {
+                    "user_id": 3,
+                    "movie_id": 102,
+                    "rating": 4.0,
+                    "user_idx": 2,
+                    "item_idx": 1,
+                },
+                {
+                    "user_id": 3,
+                    "movie_id": 104,
+                    "rating": 5.0,
+                    "user_idx": 2,
+                    "item_idx": 3,
+                },
             ]
         )
         self.test = pd.DataFrame(
@@ -77,12 +112,16 @@ class RecommenderEvaluationTests(unittest.TestCase):
         self.assertAlmostEqual(coverage, 0.75)
 
     def test_popularity_recommender_retorna_itens_nao_vistos(self) -> None:
-        model = PopularityRecommender().fit(self.train, self.user_features, self.item_features)
+        model = PopularityRecommender().fit(
+            self.train, self.user_features, self.item_features
+        )
         recommendations = model.recommend(user_id=1, candidate_item_ids=[103, 104], k=2)
         self.assertEqual(recommendations, [103, 104])
 
     def test_item_knn_recommender_exclui_itens_vistos_e_retorna_top_k(self) -> None:
-        model = ItemKNNRecommender(n_neighbors=2).fit(self.train, self.user_features, self.item_features)
+        model = ItemKNNRecommender(n_neighbors=2).fit(
+            self.train, self.user_features, self.item_features
+        )
         recommendations = model.recommend(user_id=1, candidate_item_ids=[103, 104], k=2)
         self.assertEqual(len(recommendations), 2)
         self.assertNotIn(101, recommendations)

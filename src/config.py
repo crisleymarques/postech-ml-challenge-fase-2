@@ -5,8 +5,24 @@ variáveis de ambiente e de um arquivo .env opcional, fornecendo um objeto de
 configurações centralizado.
 """
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ModelSettings(BaseModel):
+    """Hiperparâmetros do modelo neural de recomendação."""
+
+    learning_rate: float = Field(
+        default=0.001, description="Taxa de aprendizado (learning rate)."
+    )
+    batch_size: int = Field(default=256, description="Tamanho do batch.")
+    embedding_dim: int = Field(
+        default=32, description="Dimensão dos embeddings (usuários e itens)."
+    )
+    epochs: int = Field(default=20, description="Número máximo de épocas.")
+    early_stopping_patience: int = Field(
+        default=5, description="Paciência do early stopping."
+    )
 
 
 class Settings(BaseSettings):
@@ -33,7 +49,7 @@ class Settings(BaseSettings):
         description="Estágio do ambiente",
     )
     mlflow_tracking_uri: str = Field(
-        default="http://localhost:5000",
+        default="sqlite:///mlflow.db",
         description="URI de tracking do servidor MLflow",
     )
     mlflow_experiment_name: str = Field(
@@ -56,6 +72,7 @@ class Settings(BaseSettings):
         default="configs",
         description="Diretório local de configurações",
     )
+    model: ModelSettings = Field(default_factory=ModelSettings)
 
 
 # Instancia as configurações para uso global no projeto

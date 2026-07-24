@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+import mlflow
+import mlflow.sklearn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +45,34 @@ def main() -> None:
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     with metrics_path.open("w", encoding="utf-8") as metrics_file:
         json.dump(metrics, metrics_file, indent=2, ensure_ascii=False)
+
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_experiment("MovieLens_Recommender_Experiment")
+    for model_name, model_results in metrics["results"].items():
+        with mlflow.start_run(run_name=f"Avaliacao_{model_name}"):
+            mlflow.log_params({
+                "seed": params["seed"],
+                "evaluate_k": int(params["evaluate"]["k"]),
+                "model_name": model_name
+            })
+            mlflow.log_metrics({
+                "ndcg_at_k": model_results.get("ndcg", 0.0),
+                "precision_at_k": model_results.get("precision", 0.0),
+                "recall_at_k": model_results.get("recall", 0.0)
+            })
+            mlflow.set_tag("pipeline_stage", "dvc_evaluate")
+            mlflow.log_artifact(str(metrics_path))
+            model_obj = next((m for m in recommenders if m.__class__.__name__ == model_name), None)
+
+            if model_obj:
+                if "NCFRecommender" in str(type(model_obj)) or "Neural" in model_name:
+                    import mlflow.pytorch
+                    mlflow.pytorch.log_model(model_obj, artifact_path=f"modelo_{model_name}")
+                else:
+                    mlflow.sklearn.log_model(
+                        sk_model=model_obj,
+                        artifact_path=f"modelo_{model_name}"
+                    )
 
     print(json.dumps(metrics, indent=2, ensure_ascii=False))
 

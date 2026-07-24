@@ -1,0 +1,87 @@
+stages:
+  preprocess:
+    cmd: python scripts/dvc_preprocess.py
+    deps:
+      - data/raw
+      - params.yaml
+      - scripts/dvc_preprocess.py
+      - src/data/movielens_pipeline.py
+      - src/pipeline_config.py
+    params:
+      - seed
+      - data.raw_dir
+      - data.interim_dir
+      - reports.preprocess_metrics
+    outs:
+      - data/interim/movielens
+    metrics:
+      - reports/metrics/preprocess_metrics.json
+
+  feature_eng:
+    cmd: python scripts/dvc_feature_eng.py
+    deps:
+      - data/interim/movielens
+      - params.yaml
+      - scripts/dvc_feature_eng.py
+      - src/data/movielens_pipeline.py
+      - src/pipeline_config.py
+    params:
+      - seed
+      - data.interim_dir
+      - data.processed_dir
+      - split.validation_k
+      - split.test_k
+      - reports.feature_eng_metrics
+    outs:
+      - data/processed/movielens
+    metrics:
+      - reports/metrics/feature_eng_metrics.json
+
+  train:
+    cmd: python scripts/dvc_train.py
+    deps:
+      - data/processed/movielens
+      - params.yaml
+      - scripts/dvc_train.py
+      - src/data/movielens_pipeline.py
+      - src/evaluation/recommender_evaluation.py
+      - src/models/baselines.py
+      - src/models/model_persistence.py
+      - src/pipeline_config.py
+    params:
+      - seed
+      - data.processed_dir
+      - data.model_dir
+      - train.use_validation_in_fit
+      - train.baselines.popularity
+      - train.baselines.item_knn_sklearn
+      - train.item_knn.n_neighbors
+      - reports.train_metrics
+    outs:
+      - models/baselines
+    metrics:
+      - reports/metrics/train_metrics.json
+
+  evaluate:
+    cmd: python scripts/dvc_evaluate.py
+    deps:
+      - data/processed/movielens
+      - models/baselines
+      - params.yaml
+      - scripts/dvc_evaluate.py
+      - src/data/movielens_pipeline.py
+      - src/evaluation/recommender_evaluation.py
+      - src/models/baselines.py
+      - src/models/model_persistence.py
+      - src/pipeline_config.py
+    params:
+      - seed
+      - data.processed_dir
+      - data.model_dir
+      - data.evaluation_dir
+      - evaluate.k
+      - reports.evaluation_metrics
+    outs:
+      - reports/evaluation/movielens
+    metrics:
+      - reports/metrics/evaluation_metrics.json

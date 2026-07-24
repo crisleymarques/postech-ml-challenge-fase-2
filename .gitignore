@@ -219,6 +219,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# DVC local remote
+storage/
 # MLflow
 mlflow.db
 *.sqlite

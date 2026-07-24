@@ -221,3 +221,14 @@ __marimo__/
 
 # DVC local remote
 storage/
+# MLflow
+mlflow.db
+*.sqlite
+*.db
+mlruns/
+
+# Data and Models
+models/*
+!models/.gitkeep
+data/*
+!data/.gitkeep

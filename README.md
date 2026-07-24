@@ -110,6 +110,31 @@ python -m dvc push
 - `data/raw` é versionado pelo DVC via `data/raw.dvc`
 - artefatos grandes de `data/interim`, `data/processed`, `models/baselines` e `reports/evaluation` ficam fora do Git e sob controle do DVC
 - métricas consolidadas por stage ficam em `reports/metrics/`
+## Como Rodar o Pipeline
+
+O fluxo de execução dos modelos consiste na preparação dos dados, avaliação de baselines e por fim o treinamento e avaliação do modelo neural.
+
+1. **Processar o Dataset** (MovieLens):
+   ```bash
+   uv run scripts/process_movielens.py
+   ```
+
+2. **Rodar Modelos Baseline** (Popularity e ItemKNN):
+   ```bash
+   uv run scripts/run_baselines.py
+   ```
+
+3. **Treinar o Modelo Neural** (NCF):
+   O treinamento utiliza MLflow local para rastrear as métricas, e salva o melhor checkpoint automaticamente.
+   ```bash
+   uv run scripts/train_neural.py
+   ```
+
+4. **Avaliar o Modelo Neural**:
+   Carrega o melhor modelo treinado e avalia contra o conjunto de testes.
+   ```bash
+   uv run scripts/evaluate_neural.py
+   ```
 
 ---
 

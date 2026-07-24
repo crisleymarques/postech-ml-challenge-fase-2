@@ -9,11 +9,12 @@ import pandas as pd
 from src.data.movielens_pipeline import GLOBAL_SEED, set_global_seed
 from src.models.baselines import BaseRecommender, ensure_output_dir
 
-
 GLOBAL_EVAL_K = 10
 
 
-def load_processed_movielens_artifacts(processed_dir: str | Path) -> dict[str, pd.DataFrame | dict]:
+def load_processed_movielens_artifacts(
+    processed_dir: str | Path,
+) -> dict[str, pd.DataFrame | dict]:
     processed_dir = Path(processed_dir)
     metadata = json.loads((processed_dir / "metadata.json").read_text(encoding="utf-8"))
 
@@ -27,7 +28,9 @@ def load_processed_movielens_artifacts(processed_dir: str | Path) -> dict[str, p
     }
 
 
-def precision_at_k(recommended_items: list[int], relevant_items: set[int], k: int) -> float:
+def precision_at_k(
+    recommended_items: list[int], relevant_items: set[int], k: int
+) -> float:
     if k <= 0:
         raise ValueError("k precisa ser positivo.")
     if not recommended_items:
@@ -36,7 +39,9 @@ def precision_at_k(recommended_items: list[int], relevant_items: set[int], k: in
     return hits / k
 
 
-def recall_at_k(recommended_items: list[int], relevant_items: set[int], k: int) -> float:
+def recall_at_k(
+    recommended_items: list[int], relevant_items: set[int], k: int
+) -> float:
     if k <= 0:
         raise ValueError("k precisa ser positivo.")
     if not relevant_items:
@@ -45,7 +50,9 @@ def recall_at_k(recommended_items: list[int], relevant_items: set[int], k: int) 
     return hits / len(relevant_items)
 
 
-def hit_rate_at_k(recommended_items: list[int], relevant_items: set[int], k: int) -> float:
+def hit_rate_at_k(
+    recommended_items: list[int], relevant_items: set[int], k: int
+) -> float:
     return float(any(item in relevant_items for item in recommended_items[:k]))
 
 
@@ -69,10 +76,14 @@ def mrr_at_k(recommended_items: list[int], relevant_items: set[int], k: int) -> 
     return 0.0
 
 
-def catalog_coverage_at_k(recommendations_by_user: dict[int, list[int]], all_item_ids: list[int], k: int) -> float:
+def catalog_coverage_at_k(
+    recommendations_by_user: dict[int, list[int]], all_item_ids: list[int], k: int
+) -> float:
     if not all_item_ids:
         return 0.0
-    recommended_items = {item for items in recommendations_by_user.values() for item in items[:k]}
+    recommended_items = {
+        item for items in recommendations_by_user.values() for item in items[:k]
+    }
     return len(recommended_items) / len(set(all_item_ids))
 
 
@@ -111,8 +122,12 @@ def evaluate_fitted_recommender(
 
     for user_id in sorted(ground_truth):
         user_seen = seen_items.get(user_id, set())
-        candidate_items = [item_id for item_id in all_item_ids if item_id not in user_seen]
-        recommendations = recommender.recommend(user_id=user_id, candidate_item_ids=candidate_items, k=k)
+        candidate_items = [
+            item_id for item_id in all_item_ids if item_id not in user_seen
+        ]
+        recommendations = recommender.recommend(
+            user_id=user_id, candidate_item_ids=candidate_items, k=k
+        )
         relevant_items = ground_truth[user_id]
         recommendations_by_user[user_id] = recommendations
 
@@ -140,7 +155,9 @@ def evaluate_fitted_recommender(
         "hit_rate_at_k": float(per_user_results["hit_rate_at_k"].mean()),
         "ndcg_at_k": float(per_user_results["ndcg_at_k"].mean()),
         "mrr_at_k": float(per_user_results["mrr_at_k"].mean()),
-        "catalog_coverage_at_k": float(catalog_coverage_at_k(recommendations_by_user, all_item_ids, k)),
+        "catalog_coverage_at_k": float(
+            catalog_coverage_at_k(recommendations_by_user, all_item_ids, k)
+        ),
     }
 
     return aggregate_results, per_user_results
@@ -176,7 +193,9 @@ def run_benchmark(
     set_global_seed(seed)
 
     dataset = load_processed_movielens_artifacts(processed_dir)
-    fit_interactions = pd.concat([dataset["train"], dataset["validation"]], ignore_index=True)
+    fit_interactions = pd.concat(
+        [dataset["train"], dataset["validation"]], ignore_index=True
+    )
     test_interactions = dataset["test"]
     user_features = dataset["user_features"]
     item_features = dataset["item_features"]
@@ -226,7 +245,9 @@ def run_benchmark(
             "catalog_coverage_at_k",
         ],
     }
-    with (evaluation_output_dir / "evaluation_protocol.json").open("w", encoding="utf-8") as protocol_file:
+    with (evaluation_output_dir / "evaluation_protocol.json").open(
+        "w", encoding="utf-8"
+    ) as protocol_file:
         json.dump(protocol, protocol_file, indent=2, ensure_ascii=False)
 
     return {

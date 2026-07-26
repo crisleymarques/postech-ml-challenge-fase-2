@@ -232,3 +232,5 @@ models/*
 !models/.gitkeep
 data/*
 !data/.gitkeep
+!data/.gitignore
+!data/*.dvc

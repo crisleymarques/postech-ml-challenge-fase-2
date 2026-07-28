@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import mlflow
 import mlflow.sklearn
+import mlflow.pytorch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -62,16 +63,22 @@ def main() -> None:
             })
             mlflow.set_tag("pipeline_stage", "dvc_evaluate")
             mlflow.log_artifact(str(metrics_path))
-            model_obj = next((m for m in recommenders if m.__class__.__name__ == model_name), None)
+            class_map = {
+                "popularity": "PopularityRecommender",
+                "item_knn_sklearn": "ItemKNNRecommender"
+            }
+            target_class = class_map.get(model_name, model_name)
+
+            model_obj = next((m for m in recommenders if m.__class__.__name__ == target_class), None)
 
             if model_obj:
                 if "NCFRecommender" in str(type(model_obj)) or "Neural" in model_name:
-                    import mlflow.pytorch
                     mlflow.pytorch.log_model(model_obj, artifact_path=f"modelo_{model_name}")
                 else:
                     mlflow.sklearn.log_model(
                         sk_model=model_obj,
-                        artifact_path=f"modelo_{model_name}"
+                        artifact_path=f"modelo_{model_name}",
+                        serialization_format="cloudpickle"
                     )
 
     print(json.dumps(metrics, indent=2, ensure_ascii=False))

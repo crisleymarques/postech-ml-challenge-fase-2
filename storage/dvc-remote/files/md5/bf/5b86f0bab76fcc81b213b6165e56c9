@@ -1,0 +1,7 @@
+{
+  "seed": 42,
+  "fit_split": "train+validation",
+  "n_fit_interactions": 994169,
+  "n_models_trained": 2,
+  "item_knn_n_neighbors": 40
+}

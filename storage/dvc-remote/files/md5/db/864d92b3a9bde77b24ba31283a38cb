@@ -1,0 +1,95 @@
+{
+  "seed": 42,
+  "n_ratings": 1000209,
+  "n_users": 6040,
+  "n_movies": 3883,
+  "raw_profile": {
+    "summary": {
+      "n_ratings": 1000209,
+      "n_users": 6040,
+      "n_items": 3706,
+      "ratings_scale": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "timestamp_min": 956703932,
+      "timestamp_max": 1046454590,
+      "sparsity": 0.9553163743776871
+    },
+    "missing_values": {
+      "ratings": {
+        "user_id": 0,
+        "movie_id": 0,
+        "rating": 0,
+        "timestamp": 0
+      },
+      "users": {
+        "user_id": 0,
+        "gender": 0,
+        "age": 0,
+        "occupation": 0,
+        "zip_code": 0
+      },
+      "movies": {
+        "movie_id": 0,
+        "title": 0,
+        "genres": 0
+      }
+    },
+    "duplicate_rows": {
+      "ratings_full_rows": 0,
+      "ratings_user_movie_pairs": 0,
+      "users_user_id": 0,
+      "movies_movie_id": 0
+    },
+    "invalid_references": {
+      "ratings_without_user": 0,
+      "ratings_without_movie": 0
+    }
+  },
+  "quality_report": {
+    "initial_rows": {
+      "ratings": 1000209,
+      "users": 6040,
+      "movies": 3883
+    },
+    "final_rows": {
+      "ratings": 1000209,
+      "users": 6040,
+      "movies": 3883
+    },
+    "rows_removed": {
+      "ratings": 0,
+      "users": 0,
+      "movies": 0
+    },
+    "remaining_missing_values": {
+      "ratings": {
+        "user_id": 0,
+        "movie_id": 0,
+        "rating": 0,
+        "timestamp": 0,
+        "rated_at": 0,
+        "label": 0
+      },
+      "users": {
+        "user_id": 0,
+        "gender": 0,
+        "age": 0,
+        "occupation": 0,
+        "zip_code": 0,
+        "zip_prefix": 0
+      },
+      "movies": {
+        "movie_id": 0,
+        "title": 0,
+        "genres": 0,
+        "release_year": 0,
+        "genres_list": 0
+      }
+    }
+  }
+}

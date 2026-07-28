@@ -1,0 +1,26 @@
+{
+  "models": [
+    {
+      "model_name": "popularity",
+      "file_name": "popularity.pkl",
+      "class_name": "PopularityRecommender"
+    },
+    {
+      "model_name": "item_knn_sklearn",
+      "file_name": "item_knn_sklearn.pkl",
+      "class_name": "ItemKNNRecommender"
+    }
+  ],
+  "training_summary": {
+    "seed": 42,
+    "fit_split": "train+validation",
+    "n_fit_interactions": 994169,
+    "n_users": 6040,
+    "n_items": 3706,
+    "models": [
+      "popularity",
+      "item_knn_sklearn"
+    ],
+    "item_knn_n_neighbors": 40
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "seed": 42,
+  "k": 10,
+  "training_summary": {
+    "seed": 42,
+    "fit_split": "train+validation",
+    "n_fit_interactions": 994169,
+    "n_users": 6040,
+    "n_items": 3706,
+    "models": [
+      "popularity",
+      "item_knn_sklearn"
+    ],
+    "item_knn_n_neighbors": 40
+  },
+  "results": {
+    "item_knn_sklearn": {
+      "model_name": "item_knn_sklearn",
+      "k": 10,
+      "n_users_evaluated": 6040,
+      "precision_at_k": 0.006539735099337749,
+      "recall_at_k": 0.06539735099337748,
+      "hit_rate_at_k": 0.06539735099337748,
+      "ndcg_at_k": 0.03348114943342297,
+      "mrr_at_k": 0.023872266897929147,
+      "catalog_coverage_at_k": 0.1519158121964382
+    },
+    "popularity": {
+      "model_name": "popularity",
+      "k": 10,
+      "n_users_evaluated": 6040,
+      "precision_at_k": 0.003526490066225166,
+      "recall_at_k": 0.03526490066225166,
+      "hit_rate_at_k": 0.03526490066225166,
+      "ndcg_at_k": 0.017396768367964187,
+      "mrr_at_k": 0.012132739409229477,
+      "catalog_coverage_at_k": 0.05342687533729088
+    }
+  }
+}

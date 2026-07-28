@@ -1,0 +1,9 @@
+{
+  "seed": 42,
+  "n_interactions_full": 1000209,
+  "n_train": 988129,
+  "n_validation": 6040,
+  "n_test": 6040,
+  "n_users": 6040,
+  "n_items": 3706
+}

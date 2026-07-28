@@ -1,0 +1,10 @@
+{
+  "seed": 42,
+  "n_ratings": 1000209,
+  "n_users": 6040,
+  "n_movies": 3883,
+  "ratings_removed": 0,
+  "users_removed": 0,
+  "movies_removed": 0,
+  "sparsity": 0.9553163743776871
+}

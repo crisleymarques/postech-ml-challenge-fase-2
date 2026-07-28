@@ -1,0 +1,42 @@
+{
+  "initial_rows": {
+    "ratings": 1000209,
+    "users": 6040,
+    "movies": 3883
+  },
+  "final_rows": {
+    "ratings": 1000209,
+    "users": 6040,
+    "movies": 3883
+  },
+  "rows_removed": {
+    "ratings": 0,
+    "users": 0,
+    "movies": 0
+  },
+  "remaining_missing_values": {
+    "ratings": {
+      "user_id": 0,
+      "movie_id": 0,
+      "rating": 0,
+      "timestamp": 0,
+      "rated_at": 0,
+      "label": 0
+    },
+    "users": {
+      "user_id": 0,
+      "gender": 0,
+      "age": 0,
+      "occupation": 0,
+      "zip_code": 0,
+      "zip_prefix": 0
+    },
+    "movies": {
+      "movie_id": 0,
+      "title": 0,
+      "genres": 0,
+      "release_year": 0,
+      "genres_list": 0
+    }
+  }
+}

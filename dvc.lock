@@ -10,8 +10,8 @@ stages:
       nfiles: 4
     - path: params.yaml
       hash: md5
-      md5: 12d126f619d791f60619a1c5b6d654eb
-      size: 698
+      md5: 43cc187294eda0204f00ac6cd2af4df5
+      size: 730
     - path: scripts/dvc_preprocess.py
       hash: md5
       md5: eb72378f3dd2af67296a10acd7f48c8e
@@ -50,8 +50,8 @@ stages:
       nfiles: 6
     - path: params.yaml
       hash: md5
-      md5: 12d126f619d791f60619a1c5b6d654eb
-      size: 698
+      md5: 43cc187294eda0204f00ac6cd2af4df5
+      size: 730
     - path: scripts/dvc_feature_eng.py
       hash: md5
       md5: 5b1a62c1ebe0b0ad8231425eb8fd9c93
@@ -92,8 +92,8 @@ stages:
       nfiles: 7
     - path: params.yaml
       hash: md5
-      md5: 12d126f619d791f60619a1c5b6d654eb
-      size: 698
+      md5: 43cc187294eda0204f00ac6cd2af4df5
+      size: 730
     - path: scripts/dvc_train.py
       hash: md5
       md5: 9a2217e3d01da650c2c5c2eb05b13254
@@ -104,12 +104,12 @@ stages:
       size: 19456
     - path: src/evaluation/recommender_evaluation.py
       hash: md5
-      md5: 9916cb2612de9c2289dbe28d88ec4bbb
-      size: 10905
+      md5: 3e689778873a67633df5b9f1d2e1f74a
+      size: 11193
     - path: src/models/baselines.py
       hash: md5
-      md5: 82933ddaebdc0fbc091788fe242d8b08
-      size: 7964
+      md5: f7c34f980f1ef40146b92d733223d70e
+      size: 9222
     - path: src/models/model_persistence.py
       hash: md5
       md5: 3038db78efa1ae0ade7cf76c306b9b13
@@ -126,17 +126,17 @@ stages:
         seed: 42
         train.baselines.item_knn_sklearn: true
         train.baselines.popularity: true
-        train.item_knn.n_neighbors: 40
+        train.item_knn.n_neighbors: 60
         train.use_validation_in_fit: true
     outs:
     - path: models/baselines
       hash: md5
-      md5: 884d83417c2d8d46ee0dd8b03f67ca84.dir
-      size: 9282880
+      md5: d86b6e423cff950ca2c5ca0afdcba502.dir
+      size: 9872600
       nfiles: 3
     - path: reports/metrics/train_metrics.json
       hash: md5
-      md5: bf5b86f0bab76fcc81b213b6165e56c9
+      md5: f899b2a34a55e3e4168461c02882e3ae
       size: 144
   evaluate:
     cmd: python scripts/dvc_evaluate.py
@@ -148,29 +148,29 @@ stages:
       nfiles: 7
     - path: models/baselines
       hash: md5
-      md5: 884d83417c2d8d46ee0dd8b03f67ca84.dir
-      size: 9282880
+      md5: d86b6e423cff950ca2c5ca0afdcba502.dir
+      size: 9872600
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 12d126f619d791f60619a1c5b6d654eb
-      size: 698
+      md5: 43cc187294eda0204f00ac6cd2af4df5
+      size: 730
     - path: scripts/dvc_evaluate.py
       hash: md5
-      md5: 65e16e8f74d23e0a38d688819033ceb1
-      size: 1796
+      md5: f9c645e3f8c9616b322bb6ef8e5ba203
+      size: 3515
     - path: src/data/movielens_pipeline.py
       hash: md5
       md5: d6e42a911251b5a8322e7ba1aa6be245
       size: 19456
     - path: src/evaluation/recommender_evaluation.py
       hash: md5
-      md5: 9916cb2612de9c2289dbe28d88ec4bbb
-      size: 10905
+      md5: 3e689778873a67633df5b9f1d2e1f74a
+      size: 11193
     - path: src/models/baselines.py
       hash: md5
-      md5: 82933ddaebdc0fbc091788fe242d8b08
-      size: 7964
+      md5: f7c34f980f1ef40146b92d733223d70e
+      size: 9222
     - path: src/models/model_persistence.py
       hash: md5
       md5: 3038db78efa1ae0ade7cf76c306b9b13
@@ -190,10 +190,10 @@ stages:
     outs:
     - path: reports/evaluation/movielens
       hash: md5
-      md5: 81fe02297107cf1f6bf78ffb99fa3c5a.dir
-      size: 4426672
+      md5: 88dc0a3a96914964cc3e6d73f2d7c231.dir
+      size: 4425774
       nfiles: 3
     - path: reports/metrics/evaluation_metrics.json
       hash: md5
-      md5: d7cbcb171c77daa5c45c4ee56a448338
-      size: 1098
+      md5: 07d3c821d993a46ae5e2c85afce888e6
+      size: 1099

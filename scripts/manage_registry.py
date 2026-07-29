@@ -33,9 +33,9 @@ def main():
     best_ndcg = best_run.data.metrics.get("ndcg_at_k", 0.0)
     best_model_name = best_run.data.params.get("model_name", "modelo_desconhecido")
 
-    print(f"🏆 Melhor modelo encontrado: {best_model_name}")
-    print(f"📈 NDCG@K: {best_ndcg:.5f}")
-    print(f"🆔 Run ID: {best_run_id}")
+    print(f"Melhor modelo encontrado: {best_model_name}")
+    print(f"NDCG@K: {best_ndcg:.5f}")
+    print(f"Run ID: {best_run_id}")
 
     # 4. Registrar o modelo no Model Registry
     # O artifact_uri foi salvo como "modelo_nome-do-modelo" no dvc_evaluate.py
@@ -45,21 +45,21 @@ def main():
     model_version = mlflow.register_model(model_uri=model_uri, name=registry_model_name)
 
     # 5. Promover para Staging e depois para Produção
-    print(f"Movendo versão {model_version.version} para Staging...")
+    print(f"Movendo versao {model_version.version} para Staging...")
     client.transition_model_version_stage(
         name=registry_model_name,
         version=model_version.version,
         stage="Staging"
     )
 
-    print(f"Aprovando e promovendo versão {model_version.version} para Production! 🚀")
+    print(f"Aprovando e promovendo versao {model_version.version} para Production!")
     client.transition_model_version_stage(
         name=registry_model_name,
         version=model_version.version,
         stage="Production"
     )
 
-    print("\n✅ Ciclo de vida atualizado com sucesso!")
+    print("\nCiclo de vida atualizado com sucesso.")
 
 
 if __name__ == "__main__":

@@ -17,12 +17,12 @@ def main():
         # 3. Baixa e carrega o modelo em memória
         loaded_model = mlflow.sklearn.load_model(model_uri)
 
-        print("\n✅ Modelo carregado com sucesso a partir da Produção!")
-        print(f"🤖 Classe do Modelo: {type(loaded_model).__name__}")
-        print("\nO modelo está pronto para receber o método .predict() em uma API!")
+        print("\nModelo carregado com sucesso a partir da Production.")
+        print(f"Classe do modelo: {type(loaded_model).__name__}")
+        print("\nO modelo esta pronto para receber o metodo .predict() em uma API!")
 
     except Exception as e:
-        print(f"\n❌ Erro ao carregar o modelo: {e}")
+        print(f"\nErro ao carregar o modelo: {e}")
 
 
 if __name__ == "__main__":

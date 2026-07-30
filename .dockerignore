@@ -50,3 +50,18 @@ htmlcov/
 # DVC and local cache
 .dvc/cache/
 .dvc/tmp/
+
+data/*
+!data/*.dvc
+!data/.gitignore
+
+models/*
+!models/.gitignore
+
+reports/*
+!reports/.gitignore
+
+mlruns/
+mlflow.db
+mlflow/
+storage/

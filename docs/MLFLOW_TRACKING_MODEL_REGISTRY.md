@@ -87,6 +87,6 @@ uv run python scripts/predict.py
 
 ```
 
-*Saída Esperada:* `✅ Modelo carregado com sucesso a partir da Produção!`
+*Saída Esperada:* `Modelo carregado com sucesso a partir da Production.`
 
 A partir deste momento, a variável do modelo instanciado no `predict.py` está pronta para receber dados reais através do método `.predict()`.

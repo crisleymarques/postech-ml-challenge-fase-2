@@ -1,9 +1,18 @@
+import sys
+from pathlib import Path
 import mlflow
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.config import settings
 
 
 def main():
     # 1. Aponta para o servidor onde o Registry está
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
 
     model_name = "RecommendationSystemModel"
     stage = "Production"

@@ -1,13 +1,22 @@
+import sys
+from pathlib import Path
 import mlflow
 from mlflow.tracking import MlflowClient
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.config import settings
+
+
 def main():
     # 1. Configurar a conexão com o banco de dados do MLflow
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     client = MlflowClient()
 
-    experiment_name = "MovieLens_Recommender_Experiment"
+    experiment_name = settings.mlflow_experiment_name
     registry_model_name = "RecommendationSystemModel"
 
     # 2. Buscar o experimento pelo nome

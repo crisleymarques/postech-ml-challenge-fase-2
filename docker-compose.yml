@@ -1,0 +1,40 @@
+services:
+  mlflow:
+    build:
+      context: .
+      target: runtime
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --default-artifact-root
+      - /mlflow/mlruns
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+
+  trainer:
+    build:
+      context: .
+      target: runtime
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME:-MovieLens_Recommender_Experiment}
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
+      - ./storage:/storage
+      - ./mlflow:/mlflow
+    command:
+      - sh
+      - -lc
+      - dvc pull data/raw.dvc -q && dvc repro -q

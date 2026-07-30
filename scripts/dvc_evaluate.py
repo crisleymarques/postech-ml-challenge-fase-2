@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.data.movielens_pipeline import set_global_seed
 from src.evaluation.recommender_evaluation import run_benchmark_with_fitted
 from src.models.model_persistence import load_trained_recommenders
+from src.config import settings
 from src.pipeline_config import load_params, resolve_path
 
 
@@ -47,8 +48,8 @@ def main() -> None:
     with metrics_path.open("w", encoding="utf-8") as metrics_file:
         json.dump(metrics, metrics_file, indent=2, ensure_ascii=False)
 
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    mlflow.set_experiment("MovieLens_Recommender_Experiment")
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+    mlflow.set_experiment(settings.mlflow_experiment_name)
     for model_name, model_results in metrics["results"].items():
         with mlflow.start_run(run_name=f"Avaliacao_{model_name}"):
             mlflow.log_params({

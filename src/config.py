@@ -53,7 +53,7 @@ class Settings(BaseSettings):
         description="URI de tracking do servidor MLflow",
     )
     mlflow_experiment_name: str = Field(
-        default="postech-challenge",
+        default="MovieLens_Recommender_Experiment",
         description="Nome do experimento do MLflow",
     )
     dvc_remote_path: str | None = Field(

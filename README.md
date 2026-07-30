@@ -110,6 +110,14 @@ python -m dvc push
 - `data/raw` é versionado pelo DVC via `data/raw.dvc`
 - artefatos grandes de `data/interim`, `data/processed`, `models/baselines` e `reports/evaluation` ficam fora do Git e sob controle do DVC
 - métricas consolidadas por stage ficam em `reports/metrics/`
+
+---
+
+## Ambiente Containerizado (Docker)
+
+Para executar o pipeline DVC e o MLflow em um ambiente reproduzivel com Docker (multi-stage + docker-compose), consulte:
+
+- [DOCKER_DVC_MLFLOW.md](file:///c:/FIAP/Fase_2/Trabalho/postech-ml-challenge-fase-2/docs/DOCKER_DVC_MLFLOW.md)
 ## Como Rodar o Pipeline
 
 O fluxo de execução dos modelos consiste na preparação dos dados, avaliação de baselines e por fim o treinamento e avaliação do modelo neural.

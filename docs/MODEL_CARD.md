@@ -5,15 +5,15 @@ Este projeto implementa um sistema de recomendacao de filmes com foco em ranking
 * **Nome do modelo:** `pytorch-ncf` (Neural Collaborative Filtering)
 * **Tipo:** Ranqueamento de itens (Top-K) / Filtragem Colaborativa Baseada em Representações
 * **Frameworks:** PyTorch, scikit-learn (baselines), MLflow (tracking e registry), DVC (versionamento de dados/pipeline)
-* **Código-fonte do modelo:** `src/models/ncf.py` (Arquitetura Neural) e `src/models/baselines.py`
-* **Rotina de treino (loop + early stopping):** `src/training/strategy.py`
-* **Objetivo:** Comparar baselines e um modelo neural (NCF) sob o mesmo protocolo de split e métricas de ranking, estimando a probabilidade de interação entre um utilizador e um filme para gerar uma lista Top-K altamente relevante.
+* **Código-fonte do modelo:** [ncf.py](../src/models/ncf.py) (arquitetura neural) e [baselines.py](../src/models/baselines.py)
+* **Rotina de treino (loop + early stopping):** [strategy.py](../src/training/strategy.py)
+* **Objetivo:** Comparar baselines e um modelo neural (NCF) sob o mesmo protocolo de split e métricas de ranking, estimando a probabilidade de interação entre um usuario e um filme para gerar uma lista Top-K altamente relevante.
 
 ## Problema e definição do alvo
 
-* **Entidade:** Par Utilizador-Item (`user_idx`, `item_idx`)
-* **Alvo (label):** Interação (ex: clique, visualização, rating convertido em interação implícita). Para validação, utiliza-se a avaliação contra amostras negativas.
-* **Referência (Dataset/Dataloader):** `src/data/recsys_dataset.py`
+* **Entidade:** Par usuario-item (`user_idx`, `item_idx`)
+* **Alvo (label):** Interacao implicita (coluna `interaction`, tipicamente 0/1) gerada no processamento.
+* **Referência (Dataset/Dataloader):** [recsys_dataset.py](../src/data/recsys_dataset.py) (classe `InteractionDataset`)
 
 ## Dados
 
@@ -28,7 +28,7 @@ Este projeto implementa um sistema de recomendacao de filmes com foco em ranking
 
 ### Features e prevenção de vazamento
 
-* Para evitar vazamento temporal e viés de validação, os itens vistos em treino e validação são estritamente removidos do ranqueamento final durante a avaliação no conjunto de teste.
+* Para evitar vazamento temporal e vies de validacao, os itens vistos em treino e validacao sao estritamente removidos do ranqueamento final durante a avaliacao no conjunto de teste.
 
 ### Pré-processamento
 
@@ -47,7 +47,7 @@ O projeto avalia diferentes abordagens (definidas em `src/models/`):
 
 
 * **Modelo Neural (PyTorch):**
-* *NCF (Neural Collaborative Filtering)*: *Embeddings* latentes de Utilizadores e Itens $\rightarrow$ Concatenação $\rightarrow$ Camadas Densas (MLP) $\rightarrow$ ReLU $\rightarrow$ Dropout $\rightarrow$ Logit final.
+* *NCF (Neural Collaborative Filtering)*: embeddings de usuario e item + camadas densas (MLP) para produzir um score final.
 
 
 
@@ -55,19 +55,20 @@ O projeto avalia diferentes abordagens (definidas em `src/models/`):
 
 ### Divisão treino/validação/teste (Protocolo de Split)
 
-* **Estratégia:** Split temporal por utilizador (*leave-last-k-out*).
-* **Validação:** 1 item por utilizador (`validation_k=1`).
-* **Teste:** 1 item por utilizador (`test_k=1`).
+* **Estrategia:** Split temporal por usuario (leave-last-k-out).
+* **Validacao:** 1 item por usuario (`validation_k=1`).
+* **Teste:** 1 item por usuario (`test_k=1`).
 * Apenas os itens que sobram formam o conjunto de treino.
 
 ### Otimização e hiperparâmetros padrão
 
-* Parâmetros injetados via DVC (`params.yaml`) e/ou configurações no `configs/config.yaml` (ex: `embedding_dim`, `lr`, `batch_size`).
+* Baselines e pipeline DVC: hiperparametros em `params.yaml` (ex.: `train.item_knn.n_neighbors`).
+* NCF (PyTorch): hiperparametros via `Settings` e `.env` (ver [config.py](../src/config.py) e `.env.example` na raiz do projeto), ex.: `learning_rate`, `batch_size`, `embedding_dim`, `epochs`, `early_stopping_patience`.
 * O modelo ItemKNN teve seu parâmetro `n_neighbors` otimizado e registado ao longo dos experimentos.
 
 ### Early stopping
 
-* Implementado e orquestrado dentro da estratégia de treino em `src/training/strategy.py`.
+* Implementado e orquestrado dentro da estrategia de treino em `src/training/strategy.py`.
 * Interrompe o treino quando a métrica monitorada (ex: loss ou NDCG de validação) deixa de melhorar.
 * Restaura automaticamente os melhores pesos observados.
 
@@ -87,7 +88,7 @@ As métricas são reportadas em `K=10` no holdout de teste através do módulo `
 * MRR@10
 * CatalogCoverage@10
 
-*Observação metodológica:* No protocolo com exatamente 1 item relevante por utilizador isolado no teste, **Recall@K e HitRate@K tendem a coincidir**.
+*Observacao metodologica:* No protocolo com exatamente 1 item relevante por usuario isolado no teste, **Recall@K e HitRate@K tendem a coincidir**.
 
 ### Resultados (referência a partir do MLflow)
 
@@ -114,26 +115,32 @@ Resultados mais recentes gerados pelo pipeline (ver `reports/metrics/evaluation_
 
 ## Reprodutibilidade
 
-* **Pipeline de Dados e Treino:** Totalmente versionado e orquestrado com DVC. Referência: `dvc.yaml`
-* **Sementes e Aleatoriedade:** Semente fixada (`seed = 42`) de forma centralizada pelo módulo `src/utils/seeds.py`.
-* **Tracking e Governança:** Todos os experimentos e transições de estágio (Staging $\rightarrow$ Production) estão registados e detalhados via MLflow e script de gestão.
+* **Pipeline DVC (dados + baselines):** versionado e orquestrado com DVC. Referência: [dvc.yaml](../dvc.yaml)
+* **Sementes e Aleatoriedade:** semente fixada (`seed = 42`) e utilitarios em [seeds.py](../src/utils/seeds.py).
+* **Tracking e Governança (MLflow):** experimentos e transicoes (Staging -> Production) documentados em [MLFLOW_TRACKING_MODEL_REGISTRY.md](MLFLOW_TRACKING_MODEL_REGISTRY.md).
 * **Ambiente:** Dependências seladas usando Pydantic/uv no `pyproject.toml` e lock file.
 
 ## Como treinar
 
-O pipeline inteiro está integrado pelo DVC. Para rodar a rotina de dados, treinos e avaliação:
+O pipeline DVC cobre dados, features, treino e avaliacao dos baselines. Para executar:
 
 ```bash
-# Executa de ponta a ponta (preprocess, features, baselines, treino neural e evaluation)
+# Executa preprocess -> feature_eng -> train -> evaluate (baselines)
 uv run dvc repro
 
 ```
 
-Ou apenas o módulo neural isolado:
+Para treinar o NCF (fora do pipeline DVC atual), rode o script neural:
 
 ```bash
 uv run python scripts/train_neural.py
 
+```
+
+Para avaliar o NCF sob o mesmo protocolo de recomendadores:
+
+```bash
+uv run python scripts/evaluate_neural.py
 ```
 
 ## Artefatos gerados
@@ -142,5 +149,5 @@ No MLflow (`http://localhost:5000`) e DVC, a execução regista:
 
 * Parâmetros do pipeline definidos em `params.yaml`
 * Métricas globais (`evaluation_metrics.json`)
-* O modelo PyTorch encapsulado em cloudpickle via `mlflow.pytorch.log_model`
-* Registo direto no *Model Registry* automatizado para o estágio `Production`.
+* Baselines: modelos logados no MLflow no stage `evaluate` do DVC (ver `scripts/dvc_evaluate.py`) e promovidos via `scripts/manage_registry.py` para `Production` quando aplicavel.
+* NCF: o checkpoint `models/ncf_best.pth` e registrado como artifact no run `ncf_training` (ver `scripts/train_neural.py`).

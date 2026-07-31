@@ -1,188 +1,235 @@
-# Postech ML Challenge - Fase 2
+# Postech ML Challenge - Fase 2 (Sistema de Recomendacao)
 
-Este projeto estabelece a base técnica e os padrões de engenharia para o desenvolvimento do sistema de recomendação da Fase 2.
+Este repositório implementa um sistema de recomendacao com foco em ranking Top-K, usando o dataset MovieLens 1M e boas praticas de reprodutibilidade (DVC, MLflow e Docker).
 
-## Estrutura do Projeto
+## Problema e objetivos
 
-A organização dos diretórios segue a estrutura:
-- `src/`: Módulos de código-fonte (ex: configurações, pré-processamento, etc.).
-- `tests/`: Testes unitários e integrados utilizando `pytest`.
-- `data/`: Diretório destinado ao armazenamento de dados (gerenciado pelo DVC).
-- `models/`: Diretório para os pesos e artefatos de modelos.
-- `configs/`: Configurações adicionais de treinamento e modelos.
-- `scripts/`: Scripts utilitários de suporte (ex: validação do ambiente).
+- Problema de negocio (simulado): recomendar itens (filmes) para usuarios com base no historico de interacoes.
+- Objetivos tecnicos:
+  - construir um pipeline reproduzivel de dados -> treino -> avaliacao
+  - padronizar baselines e metricas para comparacao com um modelo neural (NCF)
+  - rastrear experimentos e governar o melhor modelo via MLflow Tracking e Model Registry
+  - disponibilizar um ambiente containerizado para executar tudo do zero
 
----
+## Dataset
 
-## Gerenciamento de Dependências com `uv`
+- Dataset: MovieLens 1M (GroupLens Research).
+- Volume: 1,000,209 avaliacoes, 6,040 usuarios e ~3,900 filmes (MovieLens 1M).
+- Origem/licenca/estrutura: [DOCUMENTACAO - DATASET](docs/DOCUMENTACAO%20-%20DATASET)
+- Formatos:
+  - `ratings.dat`: `UserID::MovieID::Rating::Timestamp`
+  - `users.dat`: demografia (auto-reportada)
+  - `movies.dat`: titulo e generos
 
-Este projeto utiliza o [uv](https://docs.astral.sh/uv/) para gerenciar dependências de forma ultra-rápida.
+## Arquitetura da solucao
 
-### Instalação
+- Pipeline de dados: leitura, limpeza, features e split temporal leave-last-k-out por usuario em [movielens_pipeline.py](src/data/movielens_pipeline.py)
+- Modelos:
+  - baselines em [baselines.py](src/models/baselines.py)
+  - modelo neural NCF em [ncf.py](src/models/ncf.py) e estrategia de treino em [strategy.py](src/training/strategy.py)
+- Avaliacao unica (Top-K): metricas e rotina comum em [recommender_evaluation.py](src/evaluation/recommender_evaluation.py)
+- Orquestracao/reprodutibilidade: DVC executa as etapas via [dvc.yaml](dvc.yaml)
+- Tracking e Registry: MLflow registra runs, metricas e modelos no stage `evaluate` e governa o melhor modelo via [MLFLOW_TRACKING_MODEL_REGISTRY.md](docs/MLFLOW_TRACKING_MODEL_REGISTRY.md)
 
-1. Certifique-se de que possui o `uv` instalado. Se não tiver, pode instalar via Homebrew:
-   ```bash
-   brew install uv
-   ```
+## Estrutura do repositorio
 
-2. Sincronize as dependências e o ambiente virtual:
-   ```bash
-   uv sync
-   ```
-   *Nota: O `uv` criará automaticamente o ambiente virtual `.venv` e instalará a versão do Python correta configurada no `pyproject.toml`.*
+- `src/`: codigo do pipeline, modelos, avaliacao e configuracao
+- `scripts/`: scripts executaveis (DVC stages, treino neural, governanca do registry)
+- `data/`: dados (rastreados por DVC)
+- `models/`: modelos serializados e checkpoints
+- `reports/`: relatorios e metricas consolidadas
+- `docs/`: documentacao do projeto
+- `tests/`: testes automatizados (pytest)
+- `notebooks/`: EDA e exploracao
 
-3. Ative o ambiente virtual:
-   ```bash
-   source .venv/bin/activate
-   ```
+## Pre-requisitos
 
----
+- Python >= 3.10 (recomendado 3.11)
+- Git
+- `uv` (recomendado) ou Poetry (opcional)
+- Docker Desktop + Docker Compose (opcional, para execucao containerizada)
 
-## Validação de Ambiente
+## Instalacao
 
-Para garantir que todas as dependências obrigatórias (`torch`, `scikit-learn`, `mlflow`, `dvc`) e configurações foram carregadas corretamente, execute:
-```bash
-uv run scripts/validate_env.py
-```
-
----
-
-## Pipeline Reproduzível com DVC
-
-O projeto possui um pipeline completo com DVC para versionamento de dados e reprodução das etapas de preparação, treino e avaliação.
-
-### Stages do Pipeline
-
-- `preprocess`: carrega o MovieLens bruto, executa profiling, limpeza e salva artefatos intermediários em `data/interim/movielens/`
-- `feature_eng`: gera features, índices, splits temporais sem vazamento e salva artefatos processados em `data/processed/movielens/`
-- `train`: treina os baselines configurados e salva os modelos em `models/baselines/`
-- `evaluate`: avalia todos os modelos treinados sob o mesmo protocolo e salva relatórios em `reports/evaluation/movielens/`
-
-Os parâmetros do pipeline ficam em `params.yaml`.
-
-### Configuração do Remote
-
-O repositório já vem configurado com um remote local padrão:
+### Opcao A (recomendada): uv
 
 ```bash
-python -m dvc remote list
+pip install uv
+uv sync
 ```
 
-O remote default aponta para `storage/dvc-remote`, que fica ignorado pelo Git.
+### Opcao B (opcional): Poetry
 
-Se quiser reconfigurar para outro diretório local:
+Este projeto usa `pyproject.toml` no formato PEP 621. Se voce preferir Poetry, use uma versao com suporte a PEP 621. Caso encontre incompatibilidades, use a instalacao via `uv`.
+
+## Configuracao de variaveis de ambiente (.env)
+
+1. Copie o template:
 
 ```bash
-python -m dvc remote remove localstorage
-python -m dvc remote add -d localstorage storage/dvc-remote
+copy .env.example .env
 ```
 
-Se quiser usar S3:
+2. Ajuste conforme necessario (valores comuns):
+
+- `MLFLOW_TRACKING_URI`
+  - local (sem servidor): `sqlite:///mlflow.db`
+  - com servidor (compose): `http://localhost:5000`
+- `MLFLOW_EXPERIMENT_NAME`: nome do experimento (padrao do projeto)
+- `DVC_REMOTE_PATH`: caminho do remote (local) ou url S3
+
+O carregamento do `.env` e centralizacao de configuracoes ficam em [config.py](src/config.py).
+
+## Validacao do ambiente
+
+Valida diretorios, imports e variaveis carregadas:
 
 ```bash
-python -m dvc remote modify localstorage url s3://meu-bucket/dados
-python -m dvc remote modify --local localstorage access_key_id <AWS_ACCESS_KEY_ID>
-python -m dvc remote modify --local localstorage secret_access_key <AWS_SECRET_ACCESS_KEY>
+uv run python scripts/validate_env.py
 ```
 
-### Comandos Principais
+## Qualidade de codigo (lint, format, pre-commit) e testes
 
-Baixar dados e artefatos versionados:
+Lint e format:
 
-```bash
-python -m dvc pull
-```
-
-Reproduzir o pipeline completo:
-
-```bash
-python -m dvc repro
-```
-
-Enviar novos artefatos para o remote:
-
-```bash
-python -m dvc push
-```
-
-### Observações de Versionamento
-
-- `data/raw` é versionado pelo DVC via `data/raw.dvc`
-- artefatos grandes de `data/interim`, `data/processed`, `models/baselines` e `reports/evaluation` ficam fora do Git e sob controle do DVC
-- métricas consolidadas por stage ficam em `reports/metrics/`
-
----
-
-## Ambiente Containerizado (Docker)
-
-Para executar o pipeline DVC e o MLflow em um ambiente reproduzivel com Docker (multi-stage + docker-compose), consulte:
-
-- [DOCKER_DVC_MLFLOW.md](file:///c:/FIAP/Fase_2/Trabalho/postech-ml-challenge-fase-2/docs/DOCKER_DVC_MLFLOW.md)
-## Como Rodar o Pipeline
-
-O fluxo de execução dos modelos consiste na preparação dos dados, avaliação de baselines e por fim o treinamento e avaliação do modelo neural.
-
-1. **Processar o Dataset** (MovieLens):
-   ```bash
-   uv run scripts/process_movielens.py
-   ```
-
-2. **Rodar Modelos Baseline** (Popularity e ItemKNN):
-   ```bash
-   uv run scripts/run_baselines.py
-   ```
-
-3. **Treinar o Modelo Neural** (NCF):
-   O treinamento utiliza MLflow local para rastrear as métricas, e salva o melhor checkpoint automaticamente.
-   ```bash
-   uv run scripts/train_neural.py
-   ```
-
-4. **Avaliar o Modelo Neural**:
-   Carrega o melhor modelo treinado e avalia contra o conjunto de testes.
-   ```bash
-   uv run scripts/evaluate_neural.py
-   ```
-
----
-
-## Qualidade de Código & Git Hooks
-
-### Ruff Linter & Formatter
-O Ruff é configurado em `pyproject.toml` para validar o código de acordo com o padrão Google Style de Docstrings e outras boas práticas PEP8.
-
-Para rodar manualmente a verificação e formatação:
 ```bash
 uv run ruff check .
 uv run ruff format .
 ```
 
-### Pre-commit Hooks
-Para habilitar a validação automática de lint e formatação a cada commit:
-1. Instale os hooks na pasta `.git`:
-   ```bash
-   uv run pre-commit install
-   ```
-2. Caso queira rodar manualmente todos os hooks em todos os arquivos:
-   ```bash
-   uv run pre-commit run --all-files
-   ```
+Pre-commit:
 
----
-
-## Convenção de Commits Semânticos (Conventional Commits)
-
-Neste repositório, adotamos o padrão de commits semânticos para manter o histórico de alterações legível e organizado. A estrutura do commit deve seguir:
-
-```
-<tipo>(<escopo>): <descrição curta>
+```bash
+uv run pre-commit install
+uv run pre-commit run --all-files
 ```
 
-### Tipos de Commits Aceitos:
-- `feat`: Implementação de novas funcionalidades (ex: `feat(preprocessing): adiciona MinMaxScalerStrategy`).
-- `fix`: Correção de bugs ou problemas (ex: `fix(config): corrige leitura de arquivo .env`).
-- `docs`: Modificações apenas na documentação (ex: `docs(readme): adiciona instruções de instalação`).
-- `style`: Alterações que não afetam o significado do código (espaços em branco, formatação, etc.).
-- `refactor`: Alterações de código que não corrigem bugs nem adicionam funcionalidades.
-- `test`: Adição de testes em falta ou correção de testes existentes.
-- `chore`: Atualizações de tarefas de build, gerenciamento de pacotes ou ferramentas auxiliares (ex: `chore(deps): atualiza versão do pytorch`).
+Testes:
+
+```bash
+uv run pytest -q
+```
+
+## DVC: dados, remote e execucao do pipeline
+
+### Obter dados
+
+Baixar dados do remote configurado:
+
+```bash
+uv run dvc pull data/raw.dvc
+```
+
+O remote padrao do projeto e local (`storage/dvc-remote`). Se voce estiver em outra maquina, voce precisa copiar/sincronizar essa pasta manualmente.
+
+### Configurar remote (local ou S3)
+
+Listar remotes:
+
+```bash
+uv run dvc remote list
+```
+
+Trocar remote local:
+
+```bash
+uv run dvc remote remove localstorage
+uv run dvc remote add -d localstorage storage/dvc-remote
+```
+
+S3 (credenciais sempre em modo `--local`, nunca em arquivos versionados):
+
+```bash
+uv run dvc remote modify localstorage url s3://meu-bucket/dados
+uv run dvc remote modify --local localstorage access_key_id <AWS_ACCESS_KEY_ID>
+uv run dvc remote modify --local localstorage secret_access_key <AWS_SECRET_ACCESS_KEY>
+```
+
+### Executar pipeline completo
+
+```bash
+uv run dvc repro
+```
+
+Saidas principais:
+
+- `data/interim/movielens/`
+- `data/processed/movielens/`
+- `models/baselines/`
+- `reports/evaluation/movielens/`
+- `reports/metrics/*.json`
+
+Detalhes do pipeline: [DVC_PIPELINE.md](docs/DVC_PIPELINE.md)
+
+## MLflow: Tracking, UI e Model Registry
+
+### Subir servidor MLflow (habilita Registry)
+
+```bash
+uv run mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 127.0.0.1 --port 5000
+```
+
+Abrir a UI: `http://localhost:5000`.
+
+### Gerar runs (minimo 3)
+
+1. Altere hiperparametros em `params.yaml` (ex.: `train.item_knn.n_neighbors`)
+2. Execute:
+
+```bash
+uv run dvc repro
+```
+
+### Selecionar melhor run e promover para Production
+
+```bash
+uv run python scripts/manage_registry.py
+```
+
+### Recuperar modelo em Production (inferenca)
+
+```bash
+uv run python scripts/predict.py
+```
+
+Guia completo: [MLFLOW_TRACKING_MODEL_REGISTRY.md](docs/MLFLOW_TRACKING_MODEL_REGISTRY.md)
+
+## Docker Compose (ambiente reproduzivel do zero)
+
+Guia completo: [DOCKER_DVC_MLFLOW.md](docs/DOCKER_DVC_MLFLOW.md)
+
+Comandos principais:
+
+```bash
+docker compose build
+docker compose up -d mlflow
+docker compose run --rm trainer
+```
+
+UI do MLflow: `http://localhost:5000`.
+
+## Resultados e comparacao com baselines
+
+Os resultados consolidados do pipeline ficam em `reports/metrics/evaluation_metrics.json`.
+
+Referencia (K=10, seed=42, parametros atuais do repo):
+
+| modelo | precision@10 | recall@10 | hitrate@10 | ndcg@10 | mrr@10 | catalog_coverage@10 |
+| --- | --- | --- | --- | --- | --- | --- |
+| popularity | 0.00353 | 0.03526 | 0.03526 | 0.01740 | 0.01213 | 0.05343 |
+| item_knn_sklearn | 0.00626 | 0.06258 | 0.06258 | 0.03330 | 0.02439 | 0.14031 |
+
+Detalhes das escolhas de metricas e limitacoes: [BASELINES_E_AVALIACAO.md](docs/BASELINES_E_AVALIACAO.md)
+
+## Model Card
+
+- [MODEL_CARD.md](docs/MODEL_CARD.md)
+
+## Video final
+
+- Link: (preencher)
+
+## Deploy (opcional)
+
+- URL: (preencher)
+- Instrucoes: (preencher)

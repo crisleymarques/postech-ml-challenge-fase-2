@@ -17,13 +17,13 @@ def check_directories() -> bool:
     """
     required_dirs = ["src", "tests", "data", "models", "configs", "scripts"]
     all_ok = True
-    print("\n--- Verificando Diretórios do Projeto ---")
+    print("\n--- Verificando Diretorios do Projeto ---")
     for dir_name in required_dirs:
         path = Path(dir_name)
         if path.is_dir():
-            print(f"✅ O diretório '{dir_name}' existe.")
+            print(f"OK: O diretorio '{dir_name}' existe.")
         else:
-            print(f"❌ O diretório '{dir_name}' está faltando.")
+            print(f"ERRO: O diretorio '{dir_name}' esta faltando.")
             all_ok = False
     return all_ok
 
@@ -36,14 +36,14 @@ def check_imports() -> bool:
     """
     libraries = ["torch", "sklearn", "mlflow", "dvc"]
     all_ok = True
-    print("\n--- Verificando Importações de Bibliotecas ---")
+    print("\n--- Verificando Importacoes de Bibliotecas ---")
     for lib in libraries:
         try:
             module = __import__(lib)
             version = getattr(module, "__version__", "versão desconhecida")
-            print(f"✅ Importou '{lib}' com sucesso (versão: {version}).")
+            print(f"OK: Importou '{lib}' com sucesso (versao: {version}).")
         except ImportError as e:
-            print(f"❌ Falha ao importar '{lib}': {e}")
+            print(f"ERRO: Falha ao importar '{lib}': {e}")
             all_ok = False
     return all_ok
 
@@ -58,29 +58,29 @@ def check_config() -> bool:
     try:
         from src.config import settings
 
-        print("✅ Configurações do Pydantic carregadas com sucesso.")
-        print(f"   Ambiente (Environment): {settings.environment}")
-        print(f"   MLflow URI: {settings.mlflow_tracking_uri}")
-        print(f"   MLflow Exp: {settings.mlflow_experiment_name}")
-        print(f"   DVC Remote: {settings.dvc_remote_path}")
+        print("OK: Configuracoes do Pydantic carregadas com sucesso.")
+        print(f"Ambiente (Environment): {settings.environment}")
+        print(f"MLflow URI: {settings.mlflow_tracking_uri}")
+        print(f"MLflow Exp: {settings.mlflow_experiment_name}")
+        print(f"DVC Remote: {settings.dvc_remote_path}")
         return True
     except Exception as e:
-        print(f"❌ Falha ao carregar as configurações do Pydantic: {e}")
+        print(f"ERRO: Falha ao carregar as configuracoes do Pydantic: {e}")
         return False
 
 
 def main() -> None:
     """Função principal de validação."""
-    print("Iniciando a validação do ambiente do Postech ML Challenge...")
+    print("Iniciando a validacao do ambiente do Postech ML Challenge...")
     dirs_ok = check_directories()
     imports_ok = check_imports()
     config_ok = check_config()
 
     if dirs_ok and imports_ok and config_ok:
-        print("\n🎉 Validação do ambiente BEM-SUCEDIDA! Pronto para o desenvolvimento.")
+        print("\nValidacao do ambiente bem-sucedida. Pronto para o desenvolvimento.")
         sys.exit(0)
     else:
-        print("\n⚠️ Validação do ambiente FALHOU. Verifique os erros acima.")
+        print("\nValidacao do ambiente falhou. Verifique os erros acima.")
         sys.exit(1)
 
 

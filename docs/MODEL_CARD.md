@@ -1,19 +1,19 @@
 # Model Card — NCF (PyTorch) — Sistema de Recomendação (MovieLens 1M)
 
 ## Visão geral
-
+Este projeto implementa um sistema de recomendacao de filmes com foco em ranking Top-K, usando o dataset MovieLens 1M e protocolos de avaliacao reproduziveis.
 * **Nome do modelo:** `pytorch-ncf` (Neural Collaborative Filtering)
 * **Tipo:** Ranqueamento de itens (Top-K) / Filtragem Colaborativa Baseada em Representações
 * **Frameworks:** PyTorch, scikit-learn (baselines), MLflow (tracking e registry), DVC (versionamento de dados/pipeline)
-* **Código-fonte do modelo:** `src/models/recommender.py` e `src/models/factory.py`
-* **Rotina de treino:** `scripts/train_neural.py` e `src/utils_trainer.py`
+* **Código-fonte do modelo:** `src/models/ncf.py` (Arquitetura Neural) e `src/models/baselines.py`
+* **Rotina de treino (loop + early stopping):** `src/training/strategy.py`
 * **Objetivo:** Comparar baselines e um modelo neural (NCF) sob o mesmo protocolo de split e métricas de ranking, estimando a probabilidade de interação entre um utilizador e um filme para gerar uma lista Top-K altamente relevante.
 
 ## Problema e definição do alvo
 
 * **Entidade:** Par Utilizador-Item (`user_idx`, `item_idx`)
-* **Alvo (label):** Interação (ex: clique, visualização, rating convertido em interação implícita).
-* **Referência (Dataset/Dataloader):** `src/dataset.py` (Classe `RecommendationDataset`)
+* **Alvo (label):** Interação (ex: clique, visualização, rating convertido em interação implícita). Para validação, utiliza-se a avaliação contra amostras negativas.
+* **Referência (Dataset/Dataloader):** `src/data/recsys_dataset.py`
 
 ## Dados
 
@@ -26,22 +26,20 @@
 * `users.dat`: Demografia (idade, gênero, ocupação).
 
 
-* **Documentação e licença:** [DOCUMENTACAO - DATASET](https://www.google.com/search?q=DOCUMENTACAO%2520-%2520DATASET)
-
 ### Features e prevenção de vazamento
 
 * Para evitar vazamento temporal e viés de validação, os itens vistos em treino e validação são estritamente removidos do ranqueamento final durante a avaliação no conjunto de teste.
 
 ### Pré-processamento
 
-O pré-processamento ocorre centralizado via DVC (etapa `preprocess` rodando `scripts/dvc_preprocess.py`):
+O pré-processamento ocorre centralizado via DVC:
 
 * Limpeza de nulos e remoção de registos duplicados.
 * Transformação dos IDs originais em índices numéricos contínuos começando em zero (`user_idx`, `item_idx`), requisito estrito das camadas de *Embedding* do PyTorch.
 
 ## Arquitetura e Modelos Comparados
 
-O projeto avalia diferentes abordagens:
+O projeto avalia diferentes abordagens (definidas em `src/models/`):
 
 * **Baselines (Scikit-Learn):**
 * *Popularidade*: Recomenda os itens mais consumidos (não personaliza).
@@ -64,14 +62,14 @@ O projeto avalia diferentes abordagens:
 
 ### Otimização e hiperparâmetros padrão
 
-* Parâmetros injetados via `configs/config.yaml` e `params.yaml` (ex: `embedding_dim`, `lr`, `batch_size`).
-* Semente global fixada rigorosamente: `seed = 42`.
+* Parâmetros injetados via DVC (`params.yaml`) e/ou configurações no `configs/config.yaml` (ex: `embedding_dim`, `lr`, `batch_size`).
 * O modelo ItemKNN teve seu parâmetro `n_neighbors` otimizado e registado ao longo dos experimentos.
 
 ### Early stopping
 
+* Implementado e orquestrado dentro da estratégia de treino em `src/training/strategy.py`.
 * Interrompe o treino quando a métrica monitorada (ex: loss ou NDCG de validação) deixa de melhorar.
-* Restaura automaticamente os melhores pesos observados (checkpointing).
+* Restaura automaticamente os melhores pesos observados.
 
 ## Inferência e saída
 
@@ -80,7 +78,7 @@ O projeto avalia diferentes abordagens:
 
 ## Métricas de avaliação
 
-As seguintes métricas são reportadas em `K=10` no holdout de teste (`scripts/dvc_evaluate.py`):
+As métricas são reportadas em `K=10` no holdout de teste através do módulo `src/evaluation/recommender_evaluation.py`:
 
 * Precision@10
 * Recall@10
@@ -116,9 +114,10 @@ Resultados mais recentes gerados pelo pipeline (ver `reports/metrics/evaluation_
 
 ## Reprodutibilidade
 
-* **Pipeline de Dados e Treino:** Totalmente versionado e orquestrado com DVC. Referência: [`dvc.yaml`](https://www.google.com/search?q=../dvc.yaml)
-* **Tracking e Governança:** Todos os experimentos e transições de estágio (Staging $\rightarrow$ Production) estão registados e detalhados. Referência: [`MLFLOW_TRACKING_MODEL_REGISTRY.md`](https://www.google.com/search?q=MLFLOW_TRACKING_MODEL_REGISTRY.md)
-* **Seeds e Ambiente:** Semente fixada (`42`) e dependências seladas no `pyproject.toml` com lock file.
+* **Pipeline de Dados e Treino:** Totalmente versionado e orquestrado com DVC. Referência: `dvc.yaml`
+* **Sementes e Aleatoriedade:** Semente fixada (`seed = 42`) de forma centralizada pelo módulo `src/utils/seeds.py`.
+* **Tracking e Governança:** Todos os experimentos e transições de estágio (Staging $\rightarrow$ Production) estão registados e detalhados via MLflow e script de gestão.
+* **Ambiente:** Dependências seladas usando Pydantic/uv no `pyproject.toml` e lock file.
 
 ## Como treinar
 
